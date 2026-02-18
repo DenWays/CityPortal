@@ -22,7 +22,7 @@ public class Account {
     private String password;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idRole", referencedColumnName = "idRole")
+    @JoinColumn(name = "idRole")
     private Role role;
 
     @Column(name = "email", unique = true)
