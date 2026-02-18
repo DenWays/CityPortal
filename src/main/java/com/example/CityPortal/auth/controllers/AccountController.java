@@ -13,29 +13,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api")
+@RequestMapping("api/auth")
 @AllArgsConstructor
 public class AccountController {
     private final AccountService accountService;
 
-    @PostMapping("account/add")
+    @PostMapping("/register")
     public Account addAccount(@RequestBody Account account) {
         return accountService.addAccount(account);
     }
 
-    @GetMapping("account")
+    @GetMapping("/account")
     public Account getAccount(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null)
             return null;
         return userDetails.getAccount();
     }
 
-    @GetMapping("account/{login}")
+    @GetMapping("/{login}")
     public Account getAccountByLogin(@PathVariable String login) {
         return accountService.findByLogin(login);
     }
 
-    @GetMapping("account/csrf-token")
+    @GetMapping("/csrf-token")
     public Map<String, String> getCsrfToken(HttpServletRequest request) {
         Map<String, String> csrfToken = new HashMap<>();
         csrfToken.put("token", ((CsrfToken) request.getAttribute(CsrfToken.class.getName())).getToken());

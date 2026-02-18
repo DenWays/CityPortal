@@ -38,19 +38,30 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
-                .csrf(csrf  -> csrf.ignoringRequestMatchers("/logout", "/api/account/add", "/api/**"))
+        http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/register", "/api/account",  "/api/account/add", "/login",
-                                "/api/account/csrf-token", "/logout", "/css/**", "/js/**", "/api/account/{login}")
+                        .requestMatchers(
+                                "/", "/index.html",
+                                "/login", "/register",
+                                "/login.html", "/register.html",
+                                "/css/**", "/js/**", "/assets/**", "/static/**",
+                                "/favicon.ico"
+                        ).permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/", true)
                         .permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
-                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .formLogin(formLogin -> formLogin.defaultSuccessUrl("/", true).permitAll())
-                .formLogin(formLogin -> formLogin.loginPage("/login").loginProcessingUrl("/login").permitAll())
-                .logout(logout -> logout.logoutSuccessUrl("/").logoutUrl("/logout").permitAll())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/error"))
-                .build();
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/")
+                        .permitAll()
+                );
+
+        return http.build();
     }
 }
