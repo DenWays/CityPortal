@@ -32,12 +32,33 @@ function CityPortalHome() {
     })();
   }, []);
 
-  async function logout() {
-    try {
-      await fetch("/logout", { method: "POST", credentials: "same-origin" });
-    } catch (e) {}
-    window.location.reload();
-  }
+    async function getCsrfToken() {
+      const res = await fetch("/api/auth/csrf-token", { credentials: "same-origin" });
+      if (!res.ok) throw new Error("CSRF token request failed");
+      const data = await res.json();
+      return data.token;
+    }
+
+    async function logout() {
+      try {
+        const token = await getCsrfToken();
+
+        await fetch("/logout", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-TOKEN": token
+          },
+          body: new URLSearchParams({ _csrf: token }).toString()
+        });
+
+        window.location.href = "/login?logout";
+      } catch (e) {
+        console.error("Logout failed", e);
+        window.location.href = "/login";
+      }
+    }
 
   return (
     <div className="home">

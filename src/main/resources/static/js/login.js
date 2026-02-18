@@ -19,6 +19,16 @@ function LoginPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has("error")) {
+      setMsg({ type: "err", text: "Неверный логин или пароль" });
+    } else if (params.has("logout")) {
+      setMsg({ type: "ok", text: "Вы вышли из аккаунта" });
+    }
+  }, []);
+
   function onSubmit(e) {
     e.preventDefault();
 

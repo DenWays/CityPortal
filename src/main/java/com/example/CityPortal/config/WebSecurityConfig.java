@@ -42,7 +42,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/index.html",
-                                "/login", "/register",
+                                "/login", "/register", "/api/auth/csrf-token",
                                 "/login.html", "/register.html",
                                 "/css/**", "/js/**", "/assets/**", "/static/**",
                                 "/favicon.ico"
@@ -54,11 +54,12 @@ public class WebSecurityConfig {
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .defaultSuccessUrl("/", true)
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 );
 
