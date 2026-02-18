@@ -42,12 +42,13 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/index.html",
-                                "/login", "/register", "/api/auth/csrf-token",
+                                "/login", "/register", "/api/auth/**",
                                 "/login.html", "/register.html",
                                 "/css/**", "/js/**", "/assets/**", "/static/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auth/account").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

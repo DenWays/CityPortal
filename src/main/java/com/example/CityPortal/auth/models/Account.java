@@ -1,6 +1,7 @@
 package com.example.CityPortal.auth.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class Account {
     @Column(name = "login", unique = true)
     private String login;
 
+    @JsonIgnore
     @Column(name = "password")
     private String password;
 
