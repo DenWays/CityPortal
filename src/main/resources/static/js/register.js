@@ -84,7 +84,7 @@ function RegisterPage() {
             <div className="logo" />
             <div>
               <h1 className="title">Регистрация</h1>
-              <p className="subtitle">Создай аккаунт CityPortal (роль USER)</p>
+              <p className="subtitle">Создай аккаунт CityPortal</p>
             </div>
           </div>
         </div>
@@ -145,13 +145,20 @@ function RegisterPage() {
             </div>
 
             <div className="row">
-              <span className="small">CSRF: {csrf ? "получен" : "нет"}</span>
               <a className="small" href="/login">Войти</a>
             </div>
 
             <button className="btn" disabled={loading}>
               {loading ? "Регистрируем..." : "Создать аккаунт"}
             </button>
+
+            <a
+              href="/"
+              className="btn secondary"
+              style={{ display: "block", textAlign: "center" }}
+            >
+              На главную
+            </a>
 
             {msg && (
               <div className={"msg " + (msg.type === "ok" ? "ok" : "err")}>
@@ -163,7 +170,6 @@ function RegisterPage() {
 
         <div className="footer">
           <span>© CityPortal</span>
-          <span><a href="/">На главную</a></span>
         </div>
       </div>
     </div>

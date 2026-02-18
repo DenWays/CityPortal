@@ -67,7 +67,7 @@ function CityPortalHome() {
           <div className="logo small" />
           <div>
             <div className="topbar-title">CityPortal</div>
-            <div className="topbar-subtitle">Интерактивный портал города (MVP)</div>
+            <div className="topbar-subtitle">Интерактивный портал города</div>
           </div>
         </div>
 
@@ -77,6 +77,7 @@ function CityPortalHome() {
           ) : account ? (
             <>
               <span className="small">Вы вошли как: <b>{account.login}</b></span>
+              <a className="btn smallbtn secondary" href="/profile">Профиль</a>
               <button className="btn smallbtn secondary" onClick={logout}>
                 Выйти
               </button>
@@ -92,10 +93,9 @@ function CityPortalHome() {
 
       <main className="main">
         <section className="hero">
-          <h1 className="hero-title">Добро пожаловать 👋</h1>
+          <h1 className="hero-title">Добро пожаловать</h1>
           <p className="hero-text">
-            Это тестовая главная страница. Здесь будут: виджеты (погода, такси, маршруты, карта, пробки),
-            афиша, статьи и агрегатор заведений.
+            Это тестовая главная страница.
           </p>
 
           <div className="hero-actions">
@@ -141,7 +141,7 @@ function CityPortalHome() {
           <h2 className="section-title">Заведения</h2>
           <div className="block">
             <p className="small">
-              Здесь будет агрегатор заведений + отзывы (суммаризация через ИИ).
+              Здесь будет агрегатор заведений + отзывы.
             </p>
 
             <div className="list">
@@ -176,7 +176,7 @@ function CityPortalHome() {
           <h2 className="section-title">Маршруты по городу</h2>
           <div className="block">
             <p className="small">
-              Здесь будут готовые маршруты: прогулки, туристические места, “на выходные”.
+              Здесь будут готовые маршруты: прогулки, туристические места.
             </p>
 
             <div className="list">
@@ -228,7 +228,6 @@ function CityPortalHome() {
 
         <footer className="footer" style={{ marginTop: 24 }}>
           <span>© CityPortal</span>
-          <span>Spring Boot + PostgreSQL</span>
         </footer>
       </main>
     </div>

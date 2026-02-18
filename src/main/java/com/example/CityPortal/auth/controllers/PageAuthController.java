@@ -14,4 +14,9 @@ public class PageAuthController {
     public String register() {
         return "forward:/register.html";
     }
+
+    @GetMapping("/profile")
+    public String account() {
+        return "forward:/profile.html";
+    }
 }

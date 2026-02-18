@@ -65,7 +65,7 @@ function LoginPage() {
             <div className="logo" />
             <div>
               <h1 className="title">CityPortal</h1>
-              <p className="subtitle">Вход в аккаунт (Spring Security formLogin)</p>
+              <p className="subtitle">Вход в аккаунт</p>
             </div>
           </div>
         </div>
@@ -98,7 +98,6 @@ function LoginPage() {
             </div>
 
             <div className="row">
-              <span className="small">CSRF: {csrf ? "получен" : "нет"}</span>
               <a className="small" href="/register">Регистрация</a>
             </div>
 
@@ -120,7 +119,6 @@ function LoginPage() {
 
         <div className="footer">
           <span>© CityPortal</span>
-          <span>Backend: Spring Boot</span>
         </div>
       </div>
     </div>
