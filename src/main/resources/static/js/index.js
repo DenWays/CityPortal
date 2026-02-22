@@ -1,5 +1,36 @@
 const { useEffect, useState } = React;
 
+function iconEmoji(name) {
+  const map = {
+    "clear-day": "☀️", "clear-night": "🌙",
+    "mostly-clear-day": "🌤️", "mostly-clear-night": "🌤️",
+    "partly-cloudy-day": "⛅", "partly-cloudy-night": "☁️",
+    "overcast-day": "☁️", "overcast-night": "☁️",
+    "fog-day": "🌫️", "fog-night": "🌫️", "rime-fog": "🌫️",
+    "drizzle": "🌦️", "extreme-drizzle": "🌧️",
+    "freezing-drizzle": "🌨️", "freezing-rain": "🌨️",
+    "partly-cloudy-day-rain": "🌦️", "partly-cloudy-night-rain": "🌦️",
+    "rain": "🌧️", "extreme-rain": "🌧️",
+    "partly-cloudy-day-snow": "🌨️", "partly-cloudy-night-snow": "🌨️",
+    "snow": "❄️", "extreme-snow": "❄️", "snowflake": "❄️",
+    "thunderstorms-day": "⛈️", "thunderstorms-night": "⛈️",
+    "thunderstorms-day-rain": "⛈️", "thunderstorms-night-rain": "⛈️",
+    "thunderstorms-rain": "⛈️", "thunderstorms-extreme-rain": "⛈️",
+    "not-available": "🌡️"
+  };
+  return map[name] || "🌡️";
+}
+
+function WeatherIcon({ name, className }) {
+  const sizeMap = {
+    "weather-icon-big": "3rem",
+    "weather-icon-sm": "1.6rem",
+    "weather-detail-icon": "5rem",
+  };
+  const fontSize = sizeMap[className] || "2rem";
+  return <span style={{ fontSize, lineHeight: 1 }}>{iconEmoji(name)}</span>;
+}
+
 function Widget({ title, children }) {
   return (
     <div className="widget">
@@ -9,11 +40,94 @@ function Widget({ title, children }) {
   );
 }
 
+function formatHour(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDay(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "short" });
+}
+
+function WeatherWidget() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/weather/details");
+        if (!res.ok) throw new Error("Ошибка загрузки погоды");
+        setData(await res.json());
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return (
+    <div className="widget weather-widget">
+      <div className="widget-title">🌤 Погода</div>
+      <div className="widget-body"><span className="small muted">Загрузка...</span></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="widget weather-widget">
+      <div className="widget-title">🌤 Погода</div>
+      <div className="widget-body"><span className="small" style={{color:"var(--danger)"}}>{error}</span></div>
+    </div>
+  );
+
+  const { current, hourly, daily } = data;
+
+  return (
+    <a href="/weather" className="widget weather-widget widget-link">
+      <div className="widget-title">🌤 Погода — {current.city}</div>
+      <div className="widget-body">
+
+        {/* Текущая погода */}
+        <div className="weather-current">
+          <div className="weather-main">
+            <WeatherIcon name={current.icon} className="weather-icon-big" />
+            <div>
+              <div className="weather-temp">{Math.round(current.tempC)}°C</div>
+              <div className="small">{current.description}</div>
+            </div>
+          </div>
+          <div className="weather-feels">
+            <span className="small muted">Ощущается как</span>
+            <span className="small"> {Math.round(current.feelsLikeC)}°C</span>
+          </div>
+        </div>
+
+        {/* Почасовой прогноз (превью — 6 часов) */}
+        <div className="weather-scroll">
+          {hourly.slice(0, 6).map((h, i) => (
+            <div key={i} className="weather-scroll-item">
+              <div className="small muted">{formatHour(h.time)}</div>
+              <WeatherIcon name={h.icon} className="weather-icon-sm" />
+              <div className="small" style={{fontWeight:700}}>{Math.round(h.tempC)}°</div>
+            </div>
+          ))}
+          <div className="weather-scroll-item weather-scroll-more">
+            <span className="small muted">Подробнее →</span>
+          </div>
+        </div>
+
+      </div>
+    </a>
+  );
+}
+
 function CityPortalHome() {
   const [account, setAccount] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
 
-  const [weather] = useState({ temp: "+3°C", desc: "Облачно", city: "Ваш город" });
   const [traffic] = useState({ level: "6/10", note: "Пробки средние" });
   const [taxi] = useState({ price: "≈ 450₽", eta: "7 мин" });
 
@@ -110,11 +224,7 @@ function CityPortalHome() {
           <h2 className="section-title">Виджеты</h2>
 
           <div className="grid">
-            <Widget title="Погода">
-              <div className="big">{weather.temp}</div>
-              <div className="small">{weather.desc}</div>
-              <div className="small muted">{weather.city}</div>
-            </Widget>
+            <WeatherWidget />
 
             <Widget title="Пробки">
               <div className="big">{traffic.level}</div>
