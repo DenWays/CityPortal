@@ -1,5 +1,4 @@
 package com.example.CityPortal.weather.services.impls;
-
 import com.example.CityPortal.weather.config.WeatherApiProperties;
 import com.example.CityPortal.weather.config.WeatherCityProperties;
 import com.example.CityPortal.weather.dtos.DailyDto;
@@ -8,6 +7,7 @@ import com.example.CityPortal.weather.dtos.WeatherDetailsDto;
 import com.example.CityPortal.weather.dtos.WeatherWidgetDto;
 import com.example.CityPortal.weather.services.WeatherService;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
