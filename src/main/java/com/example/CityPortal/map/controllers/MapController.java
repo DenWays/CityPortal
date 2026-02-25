@@ -15,16 +15,12 @@ public class MapController {
     private final MapService mapService;
 
     @GetMapping("/js-key")
-    public ResponseEntity<String> getJsKey() {
-        return ResponseEntity.ok(mapService.getJsApiKey());
+    public String getJsKey() {
+        return mapService.getJsApiKey();
     }
 
     @GetMapping("/geocode")
-    public ResponseEntity<String> geocode(@RequestParam String q) {
-        String coords = mapService.geocode(q);
-        if (coords == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(coords);
+    public String geocode(@RequestParam String q) {
+        return null;
     }
 }
