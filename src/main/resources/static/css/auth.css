@@ -599,3 +599,15 @@ a:hover { text-decoration: underline; }
   .weather-daily-range{ min-width: 100px; }
 }
 
+/* --------------------------
+   Map Widget
+-------------------------- */
+
+.map-widget{
+  grid-column: span 12;
+}
+
+@media (max-width: 920px){
+  .map-widget{ grid-column: span 12; }
+}
+

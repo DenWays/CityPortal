@@ -124,6 +124,148 @@ function WeatherWidget() {
   );
 }
 
+function MapWidget() {
+  const [mapReady, setMapReady]       = useState(false);
+  const [mapError, setMapError]       = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching]     = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [searchResult, setSearchResult] = useState(null);
+
+  const mapRef       = React.useRef(null);
+  const placemarkRef = React.useRef(null);
+  const initDone     = React.useRef(false);
+
+  // Загружаем JS API Яндекс Карт (один раз)
+  useEffect(() => {
+    if (window._ymapsLoaded) {
+      window.ymaps.ready(() => setMapReady(true));
+      return;
+    }
+    (async () => {
+      try {
+        const res = await fetch("/api/maps/js-key");
+        if (!res.ok) throw new Error("Не удалось получить ключ карты");
+        const key = await res.text();
+        const script = document.createElement("script");
+        script.src = `https://api-maps.yandex.ru/2.1/?apikey=${key}&lang=ru_RU`;
+        script.async = true;
+        script.onload = () => {
+          window._ymapsLoaded = true;
+          window.ymaps.ready(() => setMapReady(true));
+        };
+        script.onerror = () => setMapError("Не удалось загрузить Яндекс Карты");
+        document.head.appendChild(script);
+      } catch (e) {
+        setMapError(e.message);
+      }
+    })();
+  }, []);
+
+  // Инициализируем карту
+  useEffect(() => {
+    if (!mapReady || initDone.current) return;
+    initDone.current = true;
+    mapRef.current = new window.ymaps.Map("ymap-widget-container", {
+      center: [51.7727, 55.1039],
+      zoom: 12,
+      controls: ["zoomControl", "geolocationControl"]
+    });
+  }, [mapReady]);
+
+  const handleSearch = React.useCallback(async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchError(null);
+    setSearchResult(null);
+    try {
+      const res = await fetch(`/api/maps/geocode?q=${encodeURIComponent(searchQuery)}`);
+      if (res.status === 404) throw new Error("Место не найдено");
+      if (!res.ok) throw new Error("Ошибка геокодирования");
+      const coords = await res.text();
+      const [lat, lon] = coords.split(",").map(Number);
+      if (placemarkRef.current) mapRef.current.geoObjects.remove(placemarkRef.current);
+      const placemark = new window.ymaps.Placemark(
+        [lat, lon],
+        { balloonContent: searchQuery, hintContent: searchQuery },
+        { preset: "islands#redDotIcon" }
+      );
+      mapRef.current.geoObjects.add(placemark);
+      mapRef.current.setCenter([lat, lon], 15, { duration: 400 });
+      placemark.balloon.open();
+      placemarkRef.current = placemark;
+      setSearchResult(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+    } catch (e) {
+      setSearchError(e.message);
+    } finally {
+      setSearching(false);
+    }
+  }, [searchQuery]);
+
+  return (
+    <div className="widget map-widget">
+      <div className="widget-title">🗺️ Карта города</div>
+      <div className="widget-body">
+
+        {/* Мини-поиск */}
+        <form onSubmit={handleSearch} style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          <input
+            className="input"
+            type="text"
+            placeholder="Найти место..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{ flex: 1, padding: "8px 10px", fontSize: 12 }}
+          />
+          <button
+            className="btn"
+            type="submit"
+            disabled={searching || !mapReady}
+            style={{ width: "auto", marginTop: 0, padding: "8px 12px", fontSize: 12 }}
+          >
+            {searching ? "..." : "🔍"}
+          </button>
+        </form>
+
+        {searchError && (
+          <div className="small" style={{ color: "var(--danger)", marginBottom: 6 }}>{searchError}</div>
+        )}
+        {searchResult && (
+          <div className="small muted" style={{ marginBottom: 6 }}>📍 {searchResult}</div>
+        )}
+
+        {mapError && (
+          <div className="small" style={{ color: "var(--danger)" }}>{mapError}</div>
+        )}
+        {!mapReady && !mapError && (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <span className="small muted">Загрузка карты...</span>
+          </div>
+        )}
+
+        <div
+          id="ymap-widget-container"
+          style={{
+            width: "100%",
+            height: "260px",
+            borderRadius: 10,
+            overflow: "hidden",
+            display: mapReady ? "block" : "none",
+            border: "1px solid rgba(255,255,255,0.10)"
+          }}
+        />
+
+        <div style={{ marginTop: 8, textAlign: "right" }}>
+          <a className="btn smallbtn secondary" href="/map" style={{ display: "inline-block" }}>
+            Открыть карту →
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CityPortalHome() {
   const [account, setAccount] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
@@ -215,7 +357,7 @@ function CityPortalHome() {
           <div className="hero-actions">
             <a className="btn" href="#widgets">Виджеты</a>
             <a className="btn secondary" href="#places">Заведения</a>
-            <a className="btn secondary" href="#routes">Маршруты</a>
+            <a className="btn secondary" href="/map">Карта</a>
             <a className="btn secondary" href="#news">Афиша / Статьи</a>
           </div>
         </section>
@@ -236,14 +378,7 @@ function CityPortalHome() {
               <div className="small">Подача: {taxi.eta}</div>
             </Widget>
 
-            <Widget title="Карта / Маршруты">
-              <div className="small">
-                Тут будет карта (2GIS / Yandex / OSM) и построение маршрутов.
-              </div>
-              <button className="btn secondary" style={{ marginTop: 10 }}>
-                Открыть карту (заглушка)
-              </button>
-            </Widget>
+            <MapWidget />
           </div>
         </section>
 
