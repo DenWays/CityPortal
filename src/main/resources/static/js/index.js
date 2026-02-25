@@ -125,18 +125,12 @@ function WeatherWidget() {
 }
 
 function MapWidget() {
-  const [mapReady, setMapReady]       = useState(false);
-  const [mapError, setMapError]       = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searching, setSearching]     = useState(false);
-  const [searchError, setSearchError] = useState(null);
-  const [searchResult, setSearchResult] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(null);
 
-  const mapRef       = React.useRef(null);
-  const placemarkRef = React.useRef(null);
-  const initDone     = React.useRef(false);
+  const mapRef   = React.useRef(null);
+  const initDone = React.useRef(false);
 
-  // Загружаем JS API Яндекс Карт (один раз)
   useEffect(() => {
     if (window._ymapsLoaded) {
       window.ymaps.ready(() => setMapReady(true));
@@ -162,7 +156,6 @@ function MapWidget() {
     })();
   }, []);
 
-  // Инициализируем карту
   useEffect(() => {
     if (!mapReady || initDone.current) return;
     initDone.current = true;
@@ -173,70 +166,13 @@ function MapWidget() {
     });
   }, [mapReady]);
 
-  const handleSearch = React.useCallback(async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setSearching(true);
-    setSearchError(null);
-    setSearchResult(null);
-    try {
-      const res = await fetch(`/api/maps/geocode?q=${encodeURIComponent(searchQuery)}`);
-      if (res.status === 404) throw new Error("Место не найдено");
-      if (!res.ok) throw new Error("Ошибка геокодирования");
-      const coords = await res.text();
-      const [lat, lon] = coords.split(",").map(Number);
-      if (placemarkRef.current) mapRef.current.geoObjects.remove(placemarkRef.current);
-      const placemark = new window.ymaps.Placemark(
-        [lat, lon],
-        { balloonContent: searchQuery, hintContent: searchQuery },
-        { preset: "islands#redDotIcon" }
-      );
-      mapRef.current.geoObjects.add(placemark);
-      mapRef.current.setCenter([lat, lon], 15, { duration: 400 });
-      placemark.balloon.open();
-      placemarkRef.current = placemark;
-      setSearchResult(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-    } catch (e) {
-      setSearchError(e.message);
-    } finally {
-      setSearching(false);
-    }
-  }, [searchQuery]);
-
   return (
     <div className="widget map-widget">
       <div className="widget-title">🗺️ Карта города</div>
       <div className="widget-body">
 
-        {/* Мини-поиск */}
-        <form onSubmit={handleSearch} style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-          <input
-            className="input"
-            type="text"
-            placeholder="Найти место..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            style={{ flex: 1, padding: "8px 10px", fontSize: 12 }}
-          />
-          <button
-            className="btn"
-            type="submit"
-            disabled={searching || !mapReady}
-            style={{ width: "auto", marginTop: 0, padding: "8px 12px", fontSize: 12 }}
-          >
-            {searching ? "..." : "🔍"}
-          </button>
-        </form>
-
-        {searchError && (
-          <div className="small" style={{ color: "var(--danger)", marginBottom: 6 }}>{searchError}</div>
-        )}
-        {searchResult && (
-          <div className="small muted" style={{ marginBottom: 6 }}>📍 {searchResult}</div>
-        )}
-
         {mapError && (
-          <div className="small" style={{ color: "var(--danger)" }}>{mapError}</div>
+          <div className="small" style={{ color: "var(--danger)", marginBottom: 6 }}>{mapError}</div>
         )}
         {!mapReady && !mapError && (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
@@ -351,7 +287,7 @@ function CityPortalHome() {
         <section className="hero">
           <h1 className="hero-title">Добро пожаловать</h1>
           <p className="hero-text">
-            Это тестовая главная страница.
+
           </p>
 
           <div className="hero-actions">
@@ -386,7 +322,7 @@ function CityPortalHome() {
           <h2 className="section-title">Заведения</h2>
           <div className="block">
             <p className="small">
-              Здесь будет агрегатор заведений + отзывы.
+
             </p>
 
             <div className="list">
@@ -421,7 +357,7 @@ function CityPortalHome() {
           <h2 className="section-title">Маршруты по городу</h2>
           <div className="block">
             <p className="small">
-              Здесь будут готовые маршруты: прогулки, туристические места.
+
             </p>
 
             <div className="list">
@@ -448,7 +384,7 @@ function CityPortalHome() {
           <h2 className="section-title">Афиша / Статьи</h2>
           <div className="block">
             <p className="small">
-              Здесь будет афиша мероприятий и статьи.
+
             </p>
 
             <div className="list">

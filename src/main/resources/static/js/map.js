@@ -1,21 +1,13 @@
-const { useEffect, useState, useRef, useCallback } = React;
+const { useEffect, useState, useRef } = React;
 
-// Центр Оренбурга
 const DEFAULT_CENTER = [51.7727, 55.1039];
 const DEFAULT_ZOOM   = 13;
 
 function MapPage() {
-  const [mapReady, setMapReady]         = useState(false);
-  const [mapError, setMapError]         = useState(null);
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [searching, setSearching]       = useState(false);
-  const [searchError, setSearchError]   = useState(null);
-  const [searchResult, setSearchResult] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(null);
+  const mapRef = useRef(null);
 
-  const mapRef       = useRef(null);  // ymaps.Map instance
-  const placemarkRef = useRef(null);  // текущая метка
-
-  // Загружаем JS API Яндекс Карт динамически
   useEffect(() => {
     (async () => {
       try {
@@ -37,56 +29,14 @@ function MapPage() {
     })();
   }, []);
 
-  // Инициализируем карту после готовности API
   useEffect(() => {
-    if (!mapReady) return;
-    if (mapRef.current) return;
-
+    if (!mapReady || mapRef.current) return;
     mapRef.current = new window.ymaps.Map("ymap-container", {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       controls: ["zoomControl", "searchControl", "fullscreenControl", "geolocationControl"]
     });
   }, [mapReady]);
-
-  const handleSearch = useCallback(async (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setSearching(true);
-    setSearchError(null);
-    setSearchResult(null);
-
-    try {
-      const res = await fetch(`/api/maps/geocode?q=${encodeURIComponent(searchQuery)}`);
-      if (res.status === 404) throw new Error("Место не найдено");
-      if (!res.ok) throw new Error("Ошибка геокодирования");
-
-      const coords = await res.text(); // "lat,lon"
-      const [lat, lon] = coords.split(",").map(Number);
-
-      if (placemarkRef.current) {
-        mapRef.current.geoObjects.remove(placemarkRef.current);
-      }
-
-      const placemark = new window.ymaps.Placemark(
-        [lat, lon],
-        { balloonContent: searchQuery, hintContent: searchQuery },
-        { preset: "islands#redDotIcon" }
-      );
-
-      mapRef.current.geoObjects.add(placemark);
-      mapRef.current.setCenter([lat, lon], 15, { duration: 500 });
-      placemark.balloon.open();
-      placemarkRef.current = placemark;
-
-      setSearchResult(`${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-    } catch (e) {
-      setSearchError(e.message);
-    } finally {
-      setSearching(false);
-    }
-  }, [searchQuery]);
 
   return (
     <div className="home">
@@ -107,40 +57,6 @@ function MapPage() {
 
       <main className="main">
 
-        {/* Поиск */}
-        <section className="section" style={{ paddingBottom: 0 }}>
-          <h2 className="section-title">Поиск на карте</h2>
-          <div className="block" style={{ padding: "14px 16px" }}>
-            <form onSubmit={handleSearch} style={{ display: "flex", gap: 8 }}>
-              <input
-                className="input"
-                type="text"
-                placeholder="Введите адрес или место..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button
-                className="btn"
-                type="submit"
-                disabled={searching}
-                style={{ width: "auto", marginTop: 0, minWidth: 90 }}
-              >
-                {searching ? "Поиск..." : "🔍 Найти"}
-              </button>
-            </form>
-
-            {searchError && (
-              <div className="msg err" style={{ marginTop: 8 }}>{searchError}</div>
-            )}
-            {searchResult && (
-              <div className="small muted" style={{ marginTop: 8 }}>
-                📍 Координаты: {searchResult}
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* Контейнер карты */}
         <section className="section">
           {mapError && (
@@ -155,7 +71,7 @@ function MapPage() {
             id="ymap-container"
             style={{
               width: "100%",
-              height: "560px",
+              height: "600px",
               borderRadius: 12,
               overflow: "hidden",
               display: mapReady ? "block" : "none",
@@ -173,4 +89,3 @@ function MapPage() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<MapPage />);
-
