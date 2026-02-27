@@ -125,11 +125,17 @@ function WeatherWidget() {
 }
 
 function MapWidget() {
-  const [mapReady, setMapReady] = useState(false);
-  const [mapError, setMapError] = useState(null);
+  const [mapReady, setMapReady]       = useState(false);
+  const [mapError, setMapError]       = useState(null);
+  const [query, setQuery]             = useState("");
+  const [results, setResults]         = useState([]);
+  const [searching, setSearching]     = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
-  const mapRef   = React.useRef(null);
-  const initDone = React.useRef(false);
+  const mapRef      = React.useRef(null);
+  const initDone    = React.useRef(false);
+  const markerRef   = React.useRef(null);
+  const debounceRef = React.useRef(null);
 
   useEffect(() => {
     if (window._ymapsLoaded) {
@@ -166,10 +172,96 @@ function MapWidget() {
     });
   }, [mapReady]);
 
+  const doSearch = async (q) => {
+    if (!q.trim()) { setResults([]); return; }
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const res = await fetch(`/api/maps/geocode?q=${encodeURIComponent(q)}`);
+      if (!res.ok) throw new Error("Ошибка геокодера");
+      const data = await res.json();
+      const members = data?.response?.GeoObjectCollection?.featureMember ?? [];
+      const mapped = members.map(m => {
+        const obj = m.GeoObject;
+        const pos = obj.Point.pos.split(" ").map(Number);
+        return { name: obj.metaDataProperty?.GeocoderMetaData?.text ?? "Без названия", coords: [pos[1], pos[0]] };
+      });
+      setResults(mapped.filter(r => r.name.toLowerCase().includes("оренбург")));
+    } catch (e) {
+      setSearchError(e.message);
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleInput = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => doSearch(val), 400);
+  };
+
+  const handleSelect = (item) => {
+    setQuery(item.name);
+    setResults([]);
+    if (!mapRef.current) return;
+    if (markerRef.current) mapRef.current.geoObjects.remove(markerRef.current);
+    markerRef.current = new window.ymaps.Placemark(item.coords, { balloonContent: item.name }, { preset: "islands#redDotIcon" });
+    mapRef.current.geoObjects.add(markerRef.current);
+    mapRef.current.setCenter(item.coords, 15, { duration: 500 });
+    markerRef.current.balloon.open();
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    clearTimeout(debounceRef.current);
+    doSearch(query);
+  };
+
   return (
     <div className="widget map-widget">
       <div className="widget-title">🗺️ Карта города</div>
       <div className="widget-body">
+
+        {/* Геокодер */}
+        <form onSubmit={handleSubmit} style={{ display: "flex", gap: 6, marginBottom: 10, position: "relative" }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <input
+              type="text"
+              className="input"
+              placeholder="Найти место на карте..."
+              value={query}
+              onChange={handleInput}
+              autoComplete="off"
+              style={{ padding: "8px 10px", fontSize: 13 }}
+            />
+            {results.length > 0 && (
+              <ul style={{
+                position: "absolute", top: "100%", left: 0, right: 0,
+                background: "rgba(11,18,32,0.97)", border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
+                zIndex: 200, maxHeight: 200, overflowY: "auto",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.5)"
+              }}>
+                {results.map((r, i) => (
+                  <li key={i} onClick={() => handleSelect(r)} style={{
+                    padding: "8px 12px", cursor: "pointer", fontSize: 12,
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    color: "var(--text)"
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >{r.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <button type="submit" className="btn smallbtn" disabled={searching} style={{ marginTop: 0, padding: "8px 12px", fontSize: 12 }}>
+            {searching ? "..." : "🔍"}
+          </button>
+        </form>
+        {searchError && <div className="small" style={{ color: "var(--danger)", marginBottom: 6 }}>{searchError}</div>}
 
         {mapError && (
           <div className="small" style={{ color: "var(--danger)", marginBottom: 6 }}>{mapError}</div>

@@ -2,6 +2,7 @@ package com.example.CityPortal.map.controllers;
 
 import com.example.CityPortal.map.services.MapService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +20,8 @@ public class MapController {
         return mapService.getJsApiKey();
     }
 
-    @GetMapping("/geocode")
+    @GetMapping(value = "/geocode", produces = MediaType.APPLICATION_JSON_VALUE)
     public String geocode(@RequestParam String q) {
-        return null;
+        return mapService.geocode(q);
     }
 }
