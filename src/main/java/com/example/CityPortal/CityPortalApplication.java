@@ -1,6 +1,7 @@
 package com.example.CityPortal;
 
 import com.example.CityPortal.map.config.MapApiProperties;
+import com.example.CityPortal.traffic.config.TrafficApiProperties;
 import com.example.CityPortal.weather.config.WeatherApiProperties;
 import com.example.CityPortal.weather.config.WeatherCityProperties;
 import org.springframework.boot.SpringApplication;
@@ -10,7 +11,7 @@ import org.springframework.cache.annotation.EnableCaching;
 
 @SpringBootApplication
 @EnableCaching
-@EnableConfigurationProperties({WeatherApiProperties.class, WeatherCityProperties.class, MapApiProperties.class})
+@EnableConfigurationProperties({WeatherApiProperties.class, WeatherCityProperties.class, MapApiProperties.class, TrafficApiProperties.class})
 public class CityPortalApplication {
 
 	public static void main(String[] args) {

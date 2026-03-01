@@ -31,6 +31,9 @@ public class RedisCacheConfig {
     @Value("${yandex.maps.geocoder-ttl-minutes:60}")
     private long geocoderTtlMinutes;
 
+    @Value("${yandex.traffic.cache-ttl-minutes:5}")
+    private long trafficTtlMinutes;
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         ObjectMapper mapper = new ObjectMapper();
@@ -52,7 +55,9 @@ public class RedisCacheConfig {
         Map<String, RedisCacheConfiguration> cacheConfigs = Map.of(
                 "weather:widget", defaultConfig.entryTtl(Duration.ofMinutes(widgetTtlMinutes)),
                 "weather:details", defaultConfig.entryTtl(Duration.ofMinutes(detailsTtlMinutes)),
-                "maps:geocode", defaultConfig.entryTtl(Duration.ofMinutes(geocoderTtlMinutes))
+                "maps:geocode", defaultConfig.entryTtl(Duration.ofMinutes(geocoderTtlMinutes)),
+                "traffic:widget", defaultConfig.entryTtl(Duration.ofMinutes(trafficTtlMinutes)),
+                "traffic:details", defaultConfig.entryTtl(Duration.ofMinutes(trafficTtlMinutes))
         );
 
         return RedisCacheManager.builder(connectionFactory)

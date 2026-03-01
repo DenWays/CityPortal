@@ -294,11 +294,69 @@ function MapWidget() {
   );
 }
 
+function TrafficWidget() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/traffic/widget");
+        if (!res.ok) throw new Error("Ошибка загрузки пробок");
+        setData(await res.json());
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return (
+    <div className="widget">
+      <div className="widget-title">🚦 Пробки</div>
+      <div className="widget-body"><span className="small muted">Загрузка...</span></div>
+    </div>
+  );
+  if (error) return (
+    <div className="widget">
+      <div className="widget-title">🚦 Пробки</div>
+      <div className="widget-body"><span className="small" style={{color:"var(--danger)"}}>{error}</span></div>
+    </div>
+  );
+
+  const levelColors = ["#6b7280","#22c55e","#22c55e","#84cc16","#84cc16","#f59e0b","#f59e0b","#ef4444","#ef4444","#dc2626","#7f1d1d"];
+  const color = levelColors[data.level] || "#6b7280";
+
+  return (
+    <a href="/traffic" className="widget widget-link">
+      <div className="widget-title">🚦 Пробки — {data.city}</div>
+      <div className="widget-body">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>{data.icon}</span>
+          <div>
+            <div className="big" style={{ color, lineHeight: 1 }}>{data.level}/10</div>
+            <div className="small" style={{ marginTop: 2 }}>{data.description}</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 3 }}>
+          {Array.from({ length: 10 }, (_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 8, borderRadius: 3,
+              background: i < data.level ? color : "rgba(255,255,255,0.08)"
+            }} />
+          ))}
+        </div>
+        <div className="small muted" style={{ marginTop: 8 }}>Нажмите, чтобы открыть карту пробок →</div>
+      </div>
+    </a>
+  );
+}
+
 function CityPortalHome() {
   const [account, setAccount] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
-
-  const [traffic] = useState({ level: "6/10", note: "Пробки средние" });
   const [taxi] = useState({ price: "≈ 450₽", eta: "7 мин" });
 
   useEffect(() => {
@@ -386,6 +444,7 @@ function CityPortalHome() {
             <a className="btn" href="#widgets">Виджеты</a>
             <a className="btn secondary" href="#places">Заведения</a>
             <a className="btn secondary" href="/map">Карта</a>
+            <a className="btn secondary" href="/traffic">Пробки</a>
             <a className="btn secondary" href="#news">Афиша / Статьи</a>
           </div>
         </section>
@@ -396,10 +455,7 @@ function CityPortalHome() {
           <div className="grid">
             <WeatherWidget />
 
-            <Widget title="Пробки">
-              <div className="big">{traffic.level}</div>
-              <div className="small">{traffic.note}</div>
-            </Widget>
+            <TrafficWidget />
 
             <Widget title="Такси">
               <div className="big">{taxi.price}</div>
