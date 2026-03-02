@@ -12,7 +12,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +73,8 @@ public class TrafficServiceImpl implements TrafficService {
 
     @SuppressWarnings("unchecked")
     private double fetchFlowRatio() {
-        String point = trafficApiProperties.lat() + "," + trafficApiProperties.lon();
+        String point = String.format(Locale.US, "%.4f,%.4f",
+                trafficApiProperties.lat(), trafficApiProperties.lon());
         String uri = FLOW_URL
                 + "?key=" + trafficApiProperties.apiKey()
                 + "&point=" + point
@@ -99,23 +104,27 @@ public class TrafficServiceImpl implements TrafficService {
         double lat = trafficApiProperties.lat();
         double lon = trafficApiProperties.lon();
 
-        String bbox = String.format("%.4f,%.4f,%.4f,%.4f",
+        String bbox = String.format(Locale.US, "%.4f,%.4f,%.4f,%.4f",
                 lon - r, lat - r, lon + r, lat + r);
 
-        String uri = INCIDENTS_URL
-                + "?key=" + trafficApiProperties.apiKey()
-                + "&bbox=" + bbox
-                + "&fields={incidents{type,properties{magnitudeOfDelay}}}"
-                + "&language=ru-RU"
-                + "&categoryFilter=0,1,2,3,4,5,6,7,8,9,10,11"
-                + "&timeValidityFilter=present";
+        String fields = "{incidents{type,properties{magnitudeOfDelay}}}";
 
-        log.debug("TomTom Incidents request: {}", uri);
+        log.debug("TomTom Incidents request: {} bbox={}", INCIDENTS_URL, bbox);
 
         Map<String, Object> body;
         try {
+            String encodedFields = URLEncoder.encode(fields, StandardCharsets.UTF_8);
+            String encodedBbox = URLEncoder.encode(bbox, StandardCharsets.UTF_8);
+            URI incidentsUri = URI.create(INCIDENTS_URL
+                    + "?key=" + trafficApiProperties.apiKey()
+                    + "&bbox=" + encodedBbox
+                    + "&fields=" + encodedFields
+                    + "&language=ru-RU"
+                    + "&categoryFilter=0,1,2,3,4,5,6,7,8,9,10,11"
+                    + "&timeValidityFilter=present");
+
             body = restClient.get()
-                    .uri(uri)
+                    .uri(incidentsUri)
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {});
         } catch (Exception e) {
@@ -157,21 +166,21 @@ public class TrafficServiceImpl implements TrafficService {
     }
 
     private static final double[][] PROBE_POINTS = {
-            {51.7600, 55.1014},  // ул. Советская
-            {51.7727, 55.1039},  // пр. Победы
-            {51.7800, 55.0900},  // ул. Терешковой
-            {51.7650, 55.1200},  // ул. Чкалова
-            {51.7500, 55.0800},  // ул. Монтажников
-            {51.7700, 55.1300},  // пр. Дзержинского
+            {51.792499, 55.126088},  // пр. Победы
+            {51.809686, 55.107124},  // ул. Терешковой
+            {51.787797, 55.094161},  // ул. Пролетарская
+            {51.780236, 55.100198},  // ул. Комсомольская
+            {51.768918, 55.130570},  // ул. Чкалова
+            {51.799912, 55.146381},  // ул. Монтажников
     };
 
     private static final String[] STREET_NAMES = {
-            "ул. Советская",
             "пр. Победы",
             "ул. Терешковой",
+            "ул. Пролетарская",
+            "ул. Комсомольская",
             "ул. Чкалова",
             "ул. Монтажников",
-            "пр. Дзержинского",
     };
 
     @SuppressWarnings("unchecked")
@@ -182,7 +191,7 @@ public class TrafficServiceImpl implements TrafficService {
             double lon = PROBE_POINTS[i][1];
             String name = STREET_NAMES[i];
             try {
-                String point = lat + "," + lon;
+                String point = String.format(Locale.US, "%.4f,%.4f", lat, lon);
                 String uri = FLOW_URL
                         + "?key=" + trafficApiProperties.apiKey()
                         + "&point=" + point
