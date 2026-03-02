@@ -354,10 +354,87 @@ function TrafficWidget() {
   );
 }
 
+function TaxiWidget() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/taxi/widget");
+        if (!res.ok) throw new Error("Ошибка загрузки такси");
+        setData(await res.json());
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) return (
+    <div className="widget">
+      <div className="widget-title">🚕 Такси</div>
+      <div className="widget-body"><span className="small muted">Загрузка...</span></div>
+    </div>
+  );
+
+  if (error || !data || data.status === "unavailable") return (
+    <a href="/taxi" className="widget widget-link">
+      <div className="widget-title">🚕 Такси — Оренбург</div>
+      <div className="widget-body">
+        <div style={{ fontSize: "2rem", marginBottom: 8 }}>🚕</div>
+        <div className="small muted">Открыть сервис такси →</div>
+      </div>
+    </a>
+  );
+
+  const priceText = data.minPrice != null
+    ? (data.minPrice === data.maxPrice ? `~${data.minPrice} ₽` : `~${data.minPrice}–${data.maxPrice} ₽`)
+    : "—";
+
+  return (
+    <a href="/taxi" className="widget widget-link">
+      <div className="widget-title">🚕 Такси — {data.city}</div>
+      <div className="widget-body">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+          <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>🚕</span>
+          <div>
+            <div className="big" style={{ color: "#fbbf24", lineHeight: 1 }}>{priceText}</div>
+            <div className="small" style={{ marginTop: 2 }}>
+              {data.waitingTimeMinutes != null ? `Подача: ${data.waitingTimeMinutes} мин` : "Яндекс GO"}
+            </div>
+          </div>
+        </div>
+        <div className="small muted" style={{ marginBottom: 6 }}>пр. Победы, 13 → пр. Победы, 178/1</div>
+        <div className="small muted" style={{ marginBottom: 10 }}>Нажмите, чтобы рассчитать маршрут →</div>
+        {data.deepLink && (
+          <a
+            href={data.deepLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "7px 14px",
+              background: "linear-gradient(135deg, #fc0, #ff8c00)",
+              borderRadius: 10, textDecoration: "none", color: "#1a1a1a",
+              fontWeight: 700, fontSize: 13,
+              boxShadow: "0 2px 10px rgba(255,200,0,0.2)"
+            }}
+          >
+            Перейти в Яндекс GO
+          </a>
+        )}
+      </div>
+    </a>
+  );
+}
+
 function CityPortalHome() {
   const [account, setAccount] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
-  const [taxi] = useState({ price: "≈ 450₽", eta: "7 мин" });
 
   useEffect(() => {
     (async () => {
@@ -445,6 +522,7 @@ function CityPortalHome() {
             <a className="btn secondary" href="#places">Заведения</a>
             <a className="btn secondary" href="/map">Карта</a>
             <a className="btn secondary" href="/traffic">Пробки</a>
+            <a className="btn secondary" href="/taxi">Такси</a>
             <a className="btn secondary" href="#news">Афиша / Статьи</a>
           </div>
         </section>
@@ -457,10 +535,7 @@ function CityPortalHome() {
 
             <TrafficWidget />
 
-            <Widget title="Такси">
-              <div className="big">{taxi.price}</div>
-              <div className="small">Подача: {taxi.eta}</div>
-            </Widget>
+            <TaxiWidget />
 
             <MapWidget />
           </div>
