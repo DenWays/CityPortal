@@ -433,8 +433,11 @@ function TaxiWidget() {
 }
 
 function CityTabs() {
-  const [activeTab, setActiveTab] = useState("places");
+  const [activeTab, setActiveTab] = useState("news");
   const [visible, setVisible] = useState(true);
+  const [news, setNews] = useState([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState(null);
 
   const switchTab = (id) => {
     if (id === activeTab) return;
@@ -442,10 +445,20 @@ function CityTabs() {
     setTimeout(() => { setActiveTab(id); setVisible(true); }, 160);
   };
 
+  useEffect(() => {
+    setNewsLoading(true);
+    setNewsError(null);
+    fetch("/api/news?page=0&size=5")
+      .then(r => { if (!r.ok) throw new Error("Ошибка загрузки новостей"); return r.json(); })
+      .then(data => setNews(data.content || []))
+      .catch(e => setNewsError(e.message))
+      .finally(() => setNewsLoading(false));
+  }, []);
+
   const tabs = [
+    { id: "news",   label: "📰 Новости" },
     { id: "places", label: "🏠 Заведения" },
     { id: "routes", label: "🗺️ Маршруты" },
-    { id: "news",   label: "🎭 Афиша / Статьи" },
   ];
 
   return (
@@ -509,20 +522,52 @@ function CityTabs() {
         )}
 
         {activeTab === "news" && (
-          <div className="list">
-            <div className="list-item">
-              <div>
-                <b>Концерт в парке (сегодня)</b>
-                <div className="small muted">19:00 • Центральный парк</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
-            </div>
-            <div className="list-item">
-              <div>
-                <b>Гайд: 10 мест где вкусно поесть</b>
-                <div className="small muted">статья • 5 мин чтения</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
+          <div>
+            {newsLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка новостей...</div>}
+            {newsError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{newsError}</div>}
+            {!newsLoading && !newsError && news.length === 0 && (
+              <div className="small muted" style={{padding:"12px 0"}}>Новостей пока нет</div>
+            )}
+            {news.map(item => (
+              <a key={item.id} href={"/news/" + item.id} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 4px",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                textDecoration: "none", color: "inherit",
+                cursor: "pointer",
+                borderRadius: 8,
+                transition: "background 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt="" style={{
+                    width: 64, height: 48, objectFit: "cover",
+                    borderRadius: 6, flexShrink: 0,
+                    background: "rgba(255,255,255,0.05)"
+                  }} onError={e => e.currentTarget.style.display = "none"} />
+                ) : (
+                  <div style={{
+                    width: 64, height: 48, borderRadius: 6, flexShrink: 0,
+                    background: "rgba(255,255,255,0.07)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "1.4rem"
+                  }}>📰</div>
+                )}
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+                    overflow: "hidden", display: "-webkit-box",
+                    WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                  }}>{item.title}</div>
+                  <div className="small muted" style={{marginTop: 3}}>
+                    {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("ru-RU") : ""}
+                  </div>
+                </div>
+              </a>
+            ))}
+            <div style={{marginTop:10, textAlign:"right"}}>
+              <a className="btn smallbtn secondary" href="/news">Все новости →</a>
             </div>
           </div>
         )}
