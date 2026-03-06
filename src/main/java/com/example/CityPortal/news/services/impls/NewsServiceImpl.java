@@ -117,6 +117,22 @@ public class NewsServiceImpl implements NewsService {
     }
 
     @Override
+    public Page<NewsDto> search(String title, String date, Pageable pageable) {
+        String titleParam = (title != null && !title.isBlank()) ? title.trim() : null;
+        LocalDateTime from = null;
+        LocalDateTime to = null;
+        if (date != null && !date.isBlank()) {
+            try {
+                LocalDate d = LocalDate.parse(date);
+                from = d.atStartOfDay();
+                to = d.plusDays(1).atStartOfDay();
+            }
+            catch (Exception ignored) {}
+        }
+        return newsRepository.search(titleParam, from, to, pageable).map(this::toDto);
+    }
+
+    @Override
     public NewsDetailDto getById(Long id) {
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Новость не найдена"));

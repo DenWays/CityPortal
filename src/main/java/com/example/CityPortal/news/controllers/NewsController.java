@@ -20,8 +20,14 @@ public class NewsController {
 
     @GetMapping
     public Page<NewsDto> getNews(@RequestParam(defaultValue = "0")  int page,
-                                                        @RequestParam(defaultValue = "10") int size) {
+                                                        @RequestParam(defaultValue = "10") int size,
+                                                        @RequestParam(required = false) String title,
+                                                        @RequestParam(required = false) String date) {
         Pageable pageable = PageRequest.of(page, Math.min(size, 50));
+        boolean hasFilter = (title != null && !title.isBlank()) || (date != null && !date.isBlank());
+        if (hasFilter) {
+            return newsService.search(title, date, pageable);
+        }
         return newsService.getAll(pageable);
     }
 

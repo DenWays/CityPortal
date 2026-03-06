@@ -8,5 +8,6 @@ import org.springframework.data.domain.Pageable;
 public interface NewsService {
     int fetchAndSave();
     Page<NewsDto> getAll(Pageable pageable);
+    Page<NewsDto> search(String title, String date, Pageable pageable);
     NewsDetailDto getById(Long id);
 }
