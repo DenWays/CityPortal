@@ -1,6 +1,5 @@
 const { useEffect, useState, useRef } = React;
 
-/* ── helpers ─────────────────────────────────────────── */
 const LEVEL_COLORS = [
   "#6b7280","#22c55e","#22c55e","#84cc16","#84cc16",
   "#f59e0b","#f59e0b","#ef4444","#ef4444","#dc2626","#7f1d1d"
@@ -33,7 +32,6 @@ function formatUpdated(iso) {
   return d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
-/* ── auth topbar ─────────────────────────────────────── */
 function TopBar() {
   const [account, setAccount] = useState(null);
 
@@ -85,14 +83,15 @@ function TopBar() {
   );
 }
 
-/* ── yandex map with traffic layer ──────────────────────*/
-function TrafficMap({ jsApiKey, lat, lon }) {
-  const [mapReady, setMapReady]   = useState(false);
-  const [mapError, setMapError]   = useState(null);
-  const [trafficOn, setTrafficOn] = useState(true);
-  const mapRef     = useRef(null);
-  const initDone   = useRef(false);
-  const trafficRef = useRef(null);
+function TrafficMap({ jsApiKey, lat, lon, selectedStreet }) {
+  const [mapReady, setMapReady]     = useState(false);
+  const [mapError, setMapError]     = useState(null);
+  const [trafficOn, setTrafficOn]   = useState(true);
+  const [streetLabel, setStreetLabel] = useState(null);
+  const mapRef        = useRef(null);
+  const initDone      = useRef(false);
+  const trafficRef    = useRef(null);
+  const streetMarkRef = useRef(null);
 
   useEffect(() => {
     if (!jsApiKey) return;
@@ -119,6 +118,29 @@ function TrafficMap({ jsApiKey, lat, lon }) {
     trafficRef.current = tc;
   }, [mapReady]);
 
+  useEffect(() => {
+    if (!mapReady || !selectedStreet) return;
+    const map = mapRef.current;
+    if (streetMarkRef.current) { map.geoObjects.remove(streetMarkRef.current); streetMarkRef.current = null; }
+    const query = `Оренбург, ${selectedStreet}`;
+    window.ymaps.geocode(query, { results: 1 }).then(res => {
+      const obj = res.geoObjects.get(0);
+      if (!obj) return;
+      const coords = obj.geometry.getCoordinates();
+      map.setCenter(coords, 15, { duration: 400 });
+      const placemark = new window.ymaps.Placemark(coords, {
+        balloonContent: selectedStreet,
+        hintContent: selectedStreet
+      }, {
+        preset: "islands#redDotIconWithCaption",
+        iconCaptionMaxWidth: "200"
+      });
+      map.geoObjects.add(placemark);
+      streetMarkRef.current = placemark;
+      setStreetLabel(selectedStreet);
+    });
+  }, [mapReady, selectedStreet]);
+
   const toggleTraffic = () => {
     if (!trafficRef.current) return;
     const p = trafficRef.current.getProvider("traffic#actual");
@@ -134,6 +156,24 @@ function TrafficMap({ jsApiKey, lat, lon }) {
           {trafficOn ? "🚫 Скрыть пробки" : "🚦 Показать пробки"}
         </button>
       </div>
+      {streetLabel && (
+        <div style={{
+          marginBottom: 10, padding: "10px 16px",
+          background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.4)",
+          borderRadius: 10, display: "flex", alignItems: "center", gap: 10
+        }}>
+          <span style={{ fontSize: "1.1rem" }}>📍</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#ef4444" }}>На карте: </span>
+          <span style={{ fontSize: 14 }}>{streetLabel}</span>
+          <button
+            onClick={() => {
+              if (streetMarkRef.current) { mapRef.current.geoObjects.remove(streetMarkRef.current); streetMarkRef.current = null; }
+              setStreetLabel(null);
+            }}
+            style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", fontSize: 16 }}
+          >✕</button>
+        </div>
+      )}
       {mapError && <div className="msg err">{mapError}</div>}
       {!mapReady && !mapError && (
         <div className="block" style={{ textAlign: "center", padding: 32 }}>
@@ -153,12 +193,12 @@ function TrafficMap({ jsApiKey, lat, lon }) {
   );
 }
 
-/* ── segments ────────────────────────────────────────── */
-function SegmentsTable({ segments }) {
+function SegmentsTable({ segments, onStreetClick }) {
   if (!segments || segments.length === 0) return null;
   return (
     <section className="section">
       <h2 className="section-title">🛣️ Загруженность участков</h2>
+      <div className="small muted" style={{ marginBottom: 8 }}>Нажмите на улицу, чтобы показать её на карте</div>
       <div className="block" style={{ padding: 0, overflow: "hidden" }}>
         {segments.map((seg, i) => {
           const color = seg.color || levelColor(seg.level);
@@ -167,9 +207,10 @@ function SegmentsTable({ segments }) {
               display: "flex", alignItems: "center", gap: 14,
               padding: "13px 18px",
               borderBottom: i < segments.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
-              transition: "background 0.15s", cursor: "default"
+              transition: "background 0.15s", cursor: "pointer"
             }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+            onClick={() => onStreetClick && onStreetClick(seg.name)}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               <div style={{
@@ -191,6 +232,7 @@ function SegmentsTable({ segments }) {
                   }} />
                 ))}
               </div>
+              <div style={{ fontSize: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>📍</div>
             </div>
           );
         })}
@@ -199,70 +241,11 @@ function SegmentsTable({ segments }) {
   );
 }
 
-/* ── legend ──────────────────────────────────────────── */
-function Legend() {
-  const items = [
-    { range: "1–2",  color: "#22c55e", label: "Свободно — движение без задержек" },
-    { range: "3–4",  color: "#84cc16", label: "Небольшие пробки — незначительные задержки" },
-    { range: "5–6",  color: "#f59e0b", label: "Умеренные пробки — задержки на отдельных участках" },
-    { range: "7–8",  color: "#ef4444", label: "Сложная обстановка — значительные задержки" },
-    { range: "9–10", color: "#7f1d1d", label: "Большие пробки — движение очень затруднено" },
-  ];
-  return (
-    <section className="section">
-      <h2 className="section-title">📊 Шкала загруженности</h2>
-      <div className="block">
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {items.map(it => (
-            <div key={it.range} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 40, height: 22, borderRadius: 7, background: it.color, flexShrink: 0, boxShadow: `0 0 8px ${it.color}55` }} />
-              <div style={{ fontWeight: 700, fontSize: 13, width: 38, flexShrink: 0, color: it.color }}>{it.range}</div>
-              <div className="small" style={{ color: "var(--text)" }}>{it.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── rush hours ──────────────────────────────────────── */
-function RushHours() {
-  const hours = [
-    { time: "07:30 – 09:30", icon: "🌅", label: "Утренний час пик",  color: "#ef4444" },
-    { time: "12:00 – 13:30", icon: "☀️", label: "Обеденное время",   color: "#f59e0b" },
-    { time: "17:00 – 19:30", icon: "🌆", label: "Вечерний час пик",  color: "#ef4444" },
-  ];
-  return (
-    <section className="section">
-      <h2 className="section-title">⏰ Часы пик в Оренбурге</h2>
-      <div className="block">
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          {hours.map(h => (
-            <div key={h.time} style={{
-              flex: "1 1 180px",
-              background: `${h.color}11`, border: `1px solid ${h.color}33`,
-              borderRadius: 12, padding: "16px", textAlign: "center"
-            }}>
-              <div style={{ fontSize: "2rem", marginBottom: 8 }}>{h.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: h.color }}>{h.time}</div>
-              <div className="small muted" style={{ marginTop: 4 }}>{h.label}</div>
-            </div>
-          ))}
-        </div>
-        <div className="small muted" style={{ marginTop: 14 }}>
-          Рекомендуем планировать поездки вне часов пик для экономии времени.
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ── main ────────────────────────────────────────────── */
 function TrafficPage() {
-  const [data, setData]       = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState(null);
+  const [selectedStreet, setSelectedStreet] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -352,16 +335,10 @@ function TrafficPage() {
             </section>
 
             {/* ── Map ── */}
-            <TrafficMap jsApiKey={data.jsApiKey} lat={data.lat} lon={data.lon} />
+            <TrafficMap jsApiKey={data.jsApiKey} lat={data.lat} lon={data.lon} selectedStreet={selectedStreet} />
 
             {/* ── Segments ── */}
-            <SegmentsTable segments={data.segments} />
-
-            {/* ── Legend ── */}
-            <Legend />
-
-            {/* ── Rush hours ── */}
-            <RushHours />
+            <SegmentsTable segments={data.segments} onStreetClick={name => { setSelectedStreet(null); setTimeout(() => setSelectedStreet(name), 0); }} />
           </>
         )}
 
