@@ -51,14 +51,18 @@ function TopBar() {
   );
 }
 
-function AddressInput({ label, color, value, onChange, onSelect, placeholder }) {
+function AddressInput({ label, color, value, onChange, onSelect, placeholder, savedAddresses }) {
   const [suggestions, setSuggestions] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const debounceRef = useRef(null);
   const wrapRef = useRef(null);
 
   useEffect(() => {
-    const handler = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
@@ -66,7 +70,8 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder }) 
   const handleInput = (val) => {
     onChange(val);
     clearTimeout(debounceRef.current);
-    if (val.length < 3) { setSuggestions([]); setOpen(false); return; }
+    if (val.length < 2) { setSuggestions([]); setDropdownOpen(false); return; }
+    setDropdownOpen(true);
     debounceRef.current = setTimeout(async () => {
       try {
         const url = `/api/maps/geocode?q=${encodeURIComponent("Оренбург, " + val)}`;
@@ -84,19 +89,52 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder }) 
           };
         });
         setSuggestions(parsed);
-        setOpen(parsed.length > 0);
-      } catch (e) { console.error("Geocode error:", e); setSuggestions([]); setOpen(false); }
+      } catch (e) { console.error("Geocode error:", e); setSuggestions([]); }
     }, 350);
+  };
+
+  const closeDropdown = () => {
+    setDropdownOpen(false);
+    setSuggestions([]);
   };
 
   const handleSelect = (item) => {
     onChange(item.full);
     onSelect(item.lat, item.lon, item.full);
-    setSuggestions([]);
-    setOpen(false);
+    closeDropdown();
+  };
+
+  const handleFavSelect = async (fav) => {
+    onChange(fav.address);
+    closeDropdown();
+    if (fav.lat && fav.lon) {
+      onSelect(fav.lat, fav.lon, fav.address);
+    } else {
+      try {
+        const url = `/api/maps/geocode?q=${encodeURIComponent("Оренбург, " + fav.address)}`;
+        const res = await fetch(url, { credentials: "same-origin" });
+        const json = await res.json();
+        const items = json?.response?.GeoObjectCollection?.featureMember ?? [];
+        if (items.length > 0) {
+          const geo = items[0].GeoObject;
+          const pos = geo.Point.pos.split(" ");
+          onSelect(parseFloat(pos[1]), parseFloat(pos[0]), fav.address);
+        } else {
+          onSelect(null, null, fav.address);
+        }
+      } catch { onSelect(null, null, fav.address); }
+    }
   };
 
   const dotColor = color === "green" ? "#22c55e" : "#ef4444";
+
+  const favMatches = (dropdownOpen && value.length >= 2 && savedAddresses && savedAddresses.length > 0)
+    ? savedAddresses.filter(a =>
+        a.label.toLowerCase().includes(value.toLowerCase()) ||
+        a.address.toLowerCase().includes(value.toLowerCase()))
+    : [];
+
+  const hasAnything = dropdownOpen && (favMatches.length > 0 || suggestions.length > 0);
 
   return (
     <div ref={wrapRef} style={{ position: "relative", flex: 1, minWidth: 220 }}>
@@ -108,7 +146,6 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder }) 
           type="text"
           value={value}
           onChange={e => handleInput(e.target.value)}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder={placeholder}
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
@@ -116,16 +153,40 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder }) 
           }}
         />
         {value && (
-          <button onClick={() => { onChange(""); onSelect(null, null, ""); setSuggestions([]); setOpen(false); }}
+          <button onClick={() => { onChange(""); onSelect(null, null, ""); closeDropdown(); }}
             style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 0 }}>✕</button>
         )}
       </div>
-      {open && suggestions.length > 0 && (
+      {hasAnything && (
         <div style={{
           position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 999,
           background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
         }}>
+          {/* Saved addresses section — only shown when typing and matches exist */}
+          {favMatches.length > 0 && (
+            <>
+              <div style={{ padding: "6px 14px 4px", fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                ⭐ ИЗБРАННЫЕ АДРЕСА
+              </div>
+              {favMatches.map((fav, i) => (
+                <div key={"fav-" + i} onMouseDown={() => handleFavSelect(fav)} style={{
+                  padding: "10px 14px", cursor: "pointer",
+                  borderBottom: (i < favMatches.length - 1 || suggestions.length > 0) ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  transition: "background 0.1s"
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <div style={{ fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span>⭐</span>{fav.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{fav.address}</div>
+                </div>
+              ))}
+            </>
+          )}
+          {/* Geocode suggestions */}
           {suggestions.map((s, i) => (
             <div key={i} onMouseDown={() => handleSelect(s)} style={{
               padding: "10px 14px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
@@ -154,8 +215,27 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
   const modeRef = useRef("from");
   const [mode, setMode] = useState("from");
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const initToAddress = urlParams.get("toAddress") || "";
+  const initToLat     = parseFloat(urlParams.get("toLat"));
+  const initToLon     = parseFloat(urlParams.get("toLon"));
+
   const [fromText, setFromText] = useState("");
-  const [toText,   setToText]   = useState("");
+  const [toText,   setToText]   = useState(initToAddress);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+
+  useEffect(() => {
+    if (initToAddress && !isNaN(initToLat) && !isNaN(initToLon)) {
+      onToChange(initToLat, initToLon);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/addresses", { credentials: "same-origin" })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setSavedAddresses(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!jsApiKey) return;
@@ -176,6 +256,11 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
       controls: ["zoomControl", "geolocationControl"]
     });
     mapRef.current = map;
+
+    if (initToAddress && !isNaN(initToLat) && !isNaN(initToLon)) {
+      placeMarker("to", [initToLat, initToLon], map);
+      map.setCenter([initToLat, initToLon], 15, { duration: 400 });
+    }
 
     map.events.add("click", (e) => {
       const coords = e.get("coords");
@@ -249,6 +334,7 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
             onChange={setFromText}
             onSelect={handleFromSelect}
             placeholder="Откуда — введите адрес или кликните на карте"
+            savedAddresses={savedAddresses}
           />
           <AddressInput
             label="Куда"
@@ -257,6 +343,7 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
             onChange={setToText}
             onSelect={handleToSelect}
             placeholder="Куда — введите адрес или кликните на карте"
+            savedAddresses={savedAddresses}
           />
         </div>
 
