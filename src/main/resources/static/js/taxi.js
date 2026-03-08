@@ -216,15 +216,32 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
   const [mode, setMode] = useState("from");
 
   const urlParams = new URLSearchParams(window.location.search);
-  const initToAddress = urlParams.get("toAddress") || "";
-  const initToLat     = parseFloat(urlParams.get("toLat"));
-  const initToLon     = parseFloat(urlParams.get("toLon"));
+  const initFromAddress = urlParams.get("fromAddress") || "";
+  const initFromLat     = parseFloat(urlParams.get("fromLat"));
+  const initFromLon     = parseFloat(urlParams.get("fromLon"));
+  const initToAddress   = urlParams.get("toAddress") || "";
+  const initToLat       = parseFloat(urlParams.get("toLat"));
+  const initToLon       = parseFloat(urlParams.get("toLon"));
 
-  const [fromText, setFromText] = useState("");
+  const [fromText, setFromText] = useState(initFromAddress);
   const [toText,   setToText]   = useState(initToAddress);
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [account, setAccount]   = useState(null);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("");
+  const [saveMsg, setSaveMsg]   = useState(null);
 
   useEffect(() => {
+    fetch("/api/auth/account", { credentials: "same-origin" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setAccount(d))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (initFromAddress && !isNaN(initFromLat) && !isNaN(initFromLon)) {
+      onFromChange(initFromLat, initFromLon);
+    }
     if (initToAddress && !isNaN(initToLat) && !isNaN(initToLon)) {
       onToChange(initToLat, initToLon);
     }
@@ -257,9 +274,14 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
     });
     mapRef.current = map;
 
+    if (initFromAddress && !isNaN(initFromLat) && !isNaN(initFromLon)) {
+      placeMarker("from", [initFromLat, initFromLon], map);
+    }
     if (initToAddress && !isNaN(initToLat) && !isNaN(initToLon)) {
       placeMarker("to", [initToLat, initToLon], map);
       map.setCenter([initToLat, initToLon], 15, { duration: 400 });
+    } else if (initFromAddress && !isNaN(initFromLat) && !isNaN(initFromLon)) {
+      map.setCenter([initFromLat, initFromLon], 15, { duration: 400 });
     }
 
     map.events.add("click", (e) => {
@@ -388,10 +410,63 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
           >
             Рассчитать стоимость
           </button>
+          {account && fromCoords && toCoords && !saveOpen && (
+            <button
+              className="btn smallbtn secondary"
+              style={{ marginTop: 0 }}
+              onClick={() => { setSaveOpen(true); setSaveLabel(""); setSaveMsg(null); }}
+            >⭐ Сохранить маршрут</button>
+          )}
           {!(fromCoords && toCoords) && (
             <span className="small muted">Укажите оба адреса</span>
           )}
         </div>
+
+        {/* Форма сохранения маршрута */}
+        {saveOpen && (
+          <div style={{
+            marginTop: 12, padding: "12px 16px",
+            background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.2)",
+            borderRadius: 10, display: "flex", flexDirection: "column", gap: 8
+          }}>
+            <div className="small" style={{ fontWeight: 600 }}>⭐ Сохранить маршрут в избранное</div>
+            <input
+              className="input"
+              value={saveLabel}
+              onChange={e => setSaveLabel(e.target.value)}
+              placeholder="Название маршрута (необязательно)"
+            />
+            {saveMsg && (
+              <div className="small" style={{ color: saveMsg.type === "ok" ? "#4ade80" : "var(--danger)" }}>
+                {saveMsg.text}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn smallbtn" style={{ marginTop: 0 }} onClick={async () => {
+                setSaveMsg(null);
+                try {
+                  const r = await fetch("/api/auth/csrf-token", { credentials: "same-origin" });
+                  const { token } = await r.json();
+                  const res = await fetch("/api/taxi/favorites", {
+                    method: "POST", credentials: "same-origin",
+                    headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": token },
+                    body: JSON.stringify({
+                      label: saveLabel.trim() || null,
+                      fromAddress: fromText, fromLat: fromCoords[0], fromLon: fromCoords[1],
+                      toAddress: toText, toLat: toCoords[0], toLon: toCoords[1]
+                    })
+                  });
+                  if (!res.ok) throw new Error("Ошибка при сохранении");
+                  setSaveMsg({ type: "ok", text: "Маршрут сохранён в избранное!" });
+                  setTimeout(() => setSaveOpen(false), 1500);
+                } catch (e) {
+                  setSaveMsg({ type: "err", text: e.message });
+                }
+              }}>Сохранить</button>
+              <button className="btn smallbtn secondary" style={{ marginTop: 0 }} onClick={() => setSaveOpen(false)}>Отмена</button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -571,13 +646,22 @@ function HeroSummary({ data }) {
 }
 
 function TaxiPage() {
-  const [fromCoords, setFromCoords] = useState(null);
-  const [toCoords,   setToCoords]   = useState(null);
+  const urlParams = new URLSearchParams(window.location.search);
+  const initFromLat = parseFloat(urlParams.get("fromLat"));
+  const initFromLon = parseFloat(urlParams.get("fromLon"));
+  const initToLat   = parseFloat(urlParams.get("toLat"));
+  const initToLon   = parseFloat(urlParams.get("toLon"));
+
+  const hasPreFill = !isNaN(initFromLat) && !isNaN(initFromLon) && !isNaN(initToLat) && !isNaN(initToLon);
+
+  const [fromCoords, setFromCoords] = useState(hasPreFill ? [initFromLat, initFromLon] : null);
+  const [toCoords,   setToCoords]   = useState(hasPreFill ? [initToLat, initToLon] : null);
   const [jsApiKey,   setJsApiKey]   = useState(null);
   const [data,       setData]       = useState(null);
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState(null);
   const [queried,    setQueried]    = useState(false);
+  const autoCalcDone = React.useRef(false);
 
   useEffect(() => {
     fetch("/api/maps/js-key")
@@ -611,6 +695,13 @@ function TaxiPage() {
       setLoading(false);
     }
   }, [fromCoords, toCoords]);
+
+  useEffect(() => {
+    if (hasPreFill && !autoCalcDone.current) {
+      autoCalcDone.current = true;
+      loadDetails([initFromLat, initFromLon], [initToLat, initToLon]);
+    }
+  }, [loadDetails]);
 
   return (
     <div className="home">

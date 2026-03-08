@@ -684,3 +684,55 @@ a:hover { text-decoration: underline; }
     font-size: 12px;
   }
 }
+
+/* Taxi widget favorite routes scrollable list */
+.taxi-favs-scroll {
+  overflow-y: auto;
+  max-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251,191,36,0.35) rgba(255,255,255,0.04);
+}
+
+.taxi-favs-scroll::-webkit-scrollbar {
+  width: 4px;
+  border-radius: 4px;
+}
+
+.taxi-favs-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+}
+
+.taxi-favs-scroll::-webkit-scrollbar-thumb {
+  background: rgba(251,191,36,0.4);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.taxi-favs-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(251,191,36,0.7);
+}
+
+/* Profile page — address dropdown in route form */
+.profile-dropdown-scroll::-webkit-scrollbar {
+  width: 4px;
+  border-radius: 4px;
+}
+
+.profile-dropdown-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+}
+
+.profile-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: rgba(251,191,36,0.4);
+  border-radius: 4px;
+}
+
+.profile-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(251,191,36,0.7);
+}

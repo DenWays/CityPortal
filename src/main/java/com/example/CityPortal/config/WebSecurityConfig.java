@@ -40,6 +40,7 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/taxi/favorites/**").authenticated()
                         .requestMatchers(
                                 "/", "/index.html",
                                 "/login", "/register", "/api/auth/**",

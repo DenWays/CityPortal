@@ -683,6 +683,7 @@ function TaxiWidget() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -696,6 +697,11 @@ function TaxiWidget() {
         setLoading(false);
       }
     })();
+    // Load favorite routes (silently ignore if not logged in)
+    fetch("/api/taxi/favorites", { credentials: "same-origin" })
+      .then(r => r.ok ? r.json() : [])
+      .then(d => setFavorites(Array.isArray(d) ? d : []))
+      .catch(() => {});
   }, []);
 
   if (loading) return (
@@ -720,40 +726,91 @@ function TaxiWidget() {
     : "—";
 
   return (
-    <a href="/taxi" className="widget widget-link">
-      <div className="widget-title">🚕 Такси — {data.city}</div>
-      <div className="widget-body">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-          <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>🚕</span>
-          <div>
-            <div className="big" style={{ color: "#fbbf24", lineHeight: 1 }}>{priceText}</div>
-            <div className="small" style={{ marginTop: 2 }}>
-              {data.waitingTimeMinutes != null ? `Подача: ${data.waitingTimeMinutes} мин` : "Яндекс GO"}
+    <div className="widget">
+      {/* Two-column layout: title row spans full width at top, then content splits left/right */}
+      <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
+
+        {/* Left column: title + price info + button */}
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 14, display: "flex", flexDirection: "column" }}>
+          <div className="widget-title" style={{ marginBottom: 8 }}>🚕 Такси — {data.city}</div>
+          <a href="/taxi" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
+              <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>🚕</span>
+              <div>
+                <div className="big" style={{ color: "#fbbf24", lineHeight: 1 }}>{priceText}</div>
+                <div className="small" style={{ marginTop: 2 }}>
+                  {data.waitingTimeMinutes != null ? `Подача: ${data.waitingTimeMinutes} мин` : "Яндекс GO"}
+                </div>
+              </div>
             </div>
+            <div className="small muted" style={{ marginBottom: 4 }}>пр. Победы, 13 → пр. Победы, 178/1</div>
+            <div className="small muted" style={{ marginBottom: 8 }}>Нажмите, чтобы рассчитать маршрут →</div>
+          </a>
+          <div style={{ marginTop: "auto" }}>
+            {data.deepLink && (
+              <a
+                href={data.deepLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "7px 14px",
+                  background: "linear-gradient(135deg, #fc0, #ff8c00)",
+                  borderRadius: 10, textDecoration: "none", color: "#1a1a1a",
+                  fontWeight: 700, fontSize: 13,
+                  boxShadow: "0 2px 10px rgba(255,200,0,0.2)"
+                }}
+              >
+                Перейти в Яндекс GO
+              </a>
+            )}
           </div>
         </div>
-        <div className="small muted" style={{ marginBottom: 6 }}>пр. Победы, 13 → пр. Победы, 178/1</div>
-        <div className="small muted" style={{ marginBottom: 10 }}>Нажмите, чтобы рассчитать маршрут →</div>
-        {data.deepLink && (
-          <a
-            href={data.deepLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "7px 14px",
-              background: "linear-gradient(135deg, #fc0, #ff8c00)",
-              borderRadius: 10, textDecoration: "none", color: "#1a1a1a",
-              fontWeight: 700, fontSize: 13,
-              boxShadow: "0 2px 10px rgba(255,200,0,0.2)"
-            }}
-          >
-            Перейти в Яндекс GO
-          </a>
-        )}
+
+        {/* Vertical divider */}
+        <div style={{ width: 1, background: "rgba(255,255,255,0.10)", flexShrink: 0, alignSelf: "stretch" }} />
+
+        {/* Right column: routes header at same level as widget title */}
+        <div style={{ flex: 1, minWidth: 0, paddingLeft: 14, display: "flex", flexDirection: "column" }}>
+          <div className="widget-title" style={{ marginBottom: 8 }}>⭐ Избранные маршруты</div>
+          {favorites.length === 0 ? (
+            <a href="/profile" style={{ textDecoration: "none" }}>
+              <div className="small muted" style={{ lineHeight: 1.5 }}>
+                Добавьте маршруты в профиле →
+              </div>
+            </a>
+          ) : (
+            <div className="taxi-favs-scroll">
+              {favorites.map(r => (
+                <a
+                  key={r.id}
+                  href={`/taxi?fromAddress=${encodeURIComponent(r.fromAddress)}&fromLat=${r.fromLat || ""}&fromLon=${r.fromLon || ""}&toAddress=${encodeURIComponent(r.toAddress)}&toLat=${r.toLat || ""}&toLon=${r.toLon || ""}`}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <div style={{
+                    padding: "7px 10px", borderRadius: 8,
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    transition: "background 0.15s"
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {r.label || "Маршрут"}
+                    </div>
+                    <div className="small muted" style={{ fontSize: 10, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {r.fromAddress} → {r.toAddress}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
-    </a>
+    </div>
   );
 }
 
