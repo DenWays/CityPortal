@@ -60,7 +60,7 @@ public class NewsServiceImpl implements NewsService {
     public int fetchAndSave() {
         int saved = 0;
         LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
+        LocalDate stopBefore = today.minusDays(3);
         int pageNum = 1;
 
         try {
@@ -85,9 +85,9 @@ public class NewsServiceImpl implements NewsService {
                     try {
                         Element timeEl = card.selectFirst("time[datetime]");
                         if (timeEl != null) {
-                            LocalDateTime dt = tryParseDateTime(timeEl.attr("datetime"));
-                            if (dt != null && dt.toLocalDate().isBefore(yesterday)) {
-                                log.info("Карточка старше вчера ({}), останавливаем парсинг", dt.toLocalDate());
+                            LocalDateTime dt = parseTimeElement(timeEl);
+                            if (dt != null && dt.toLocalDate().isBefore(stopBefore)) {
+                                log.info("Карточка старше {} дней ({}), останавливаем парсинг", 3, dt.toLocalDate());
                                 break outer;
                             }
                         }
@@ -107,8 +107,29 @@ public class NewsServiceImpl implements NewsService {
             log.error("Ошибка парсинга orenburg.ru: {}", e.getMessage(), e);
         }
 
-        log.info("Всего новостей сохранено за сегодня и вчера: {}", saved);
+        log.info("Всего новостей сохранено за последние 3 дня: {}", saved);
         return saved;
+    }
+
+    private LocalDateTime parseTimeElement(Element timeEl) {
+        String dateAttr = timeEl.attr("datetime").trim();
+        LocalDateTime dt = tryParseDateTime(dateAttr);
+        if (dt == null) return null;
+
+        // Если в атрибуте только дата (без времени) — пробуем извлечь время из текста тега
+        if (!dateAttr.contains("T") && !dateAttr.contains(" ")) {
+            // Ищем время вида HH:mm в тексте тега (включая дочерние span)
+            String text = timeEl.text();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})").matcher(text);
+            if (m.find()) {
+                try {
+                    int hour   = Integer.parseInt(m.group(1));
+                    int minute = Integer.parseInt(m.group(2));
+                    dt = dt.toLocalDate().atTime(hour, minute);
+                } catch (Exception ignored) {}
+            }
+        }
+        return dt;
     }
 
     @Override
@@ -160,7 +181,7 @@ public class NewsServiceImpl implements NewsService {
         LocalDateTime publishedAt = null;
         Element timeEl = card.selectFirst("time[datetime]");
         if (timeEl != null) {
-            publishedAt = tryParseDateTime(timeEl.attr("datetime"));
+            publishedAt = parseTimeElement(timeEl);
         }
 
         String cardImageUrl = null;
@@ -263,7 +284,7 @@ public class NewsServiceImpl implements NewsService {
         if (publishedAt == null) {
             Element detailTime = articleDoc.selectFirst("time[datetime]");
             if (detailTime != null)
-                publishedAt = tryParseDateTime(detailTime.attr("datetime"));
+                publishedAt = parseTimeElement(detailTime);
         }
 
         News news = new News();
