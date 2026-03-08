@@ -11,10 +11,17 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 @SpringBootApplication
 @EnableCaching
+@EnableScheduling
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
-@EnableConfigurationProperties({WeatherApiProperties.class, WeatherCityProperties.class, MapApiProperties.class, TrafficApiProperties.class, TaxiApiProperties.class})
+@EnableConfigurationProperties({WeatherApiProperties.class,
+													WeatherCityProperties.class,
+													MapApiProperties.class,
+													TrafficApiProperties.class,
+													TaxiApiProperties.class})
 public class CityPortalApplication {
 
 	public static void main(String[] args) {

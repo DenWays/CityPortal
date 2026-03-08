@@ -435,9 +435,14 @@ function TaxiWidget() {
 function CityTabs() {
   const [activeTab, setActiveTab] = useState("news");
   const [visible, setVisible] = useState(true);
+
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
+
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState(null);
 
   const switchTab = (id) => {
     if (id === activeTab) return;
@@ -455,8 +460,19 @@ function CityTabs() {
       .finally(() => setNewsLoading(false));
   }, []);
 
+  useEffect(() => {
+    setEventsLoading(true);
+    setEventsError(null);
+    fetch("/api/afisha?page=0&size=5")
+      .then(r => { if (!r.ok) throw new Error("Ошибка загрузки афиши"); return r.json(); })
+      .then(data => setEvents(data.content || []))
+      .catch(e => setEventsError(e.message))
+      .finally(() => setEventsLoading(false));
+  }, []);
+
   const tabs = [
     { id: "news",   label: "📰 Новости" },
+    { id: "afisha", label: "🎭 Афиша" },
     { id: "places", label: "🏠 Заведения" },
     { id: "routes", label: "🗺️ Маршруты" },
   ];
@@ -476,6 +492,107 @@ function CityTabs() {
       </div>
 
       <div className="block" style={{ marginTop: 10, opacity: visible ? 1 : 0, transition: "opacity 0.16s" }}>
+
+        {activeTab === "news" && (
+          <div>
+            {newsLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка новостей...</div>}
+            {newsError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{newsError}</div>}
+            {!newsLoading && !newsError && news.length === 0 && (
+              <div className="small muted" style={{padding:"12px 0"}}>Новостей пока нет</div>
+            )}
+            {news.map(item => (
+              <a key={item.id} href={"/news/" + item.id} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 4px",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                textDecoration: "none", color: "inherit",
+                borderRadius: 8, transition: "background 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt="" style={{
+                    width: 64, height: 48, objectFit: "cover",
+                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                  }} onError={e => e.currentTarget.style.display = "none"} />
+                ) : (
+                  <div style={{
+                    width: 64, height: 48, borderRadius: 6, flexShrink: 0,
+                    background: "rgba(255,255,255,0.07)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem"
+                  }}>📰</div>
+                )}
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+                    overflow: "hidden", display: "-webkit-box",
+                    WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                  }}>{item.title}</div>
+                  <div className="small muted" style={{marginTop: 3}}>
+                    {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("ru-RU") : ""}
+                  </div>
+                </div>
+              </a>
+            ))}
+            <div style={{marginTop:10, textAlign:"right"}}>
+              <a className="btn smallbtn secondary" href="/news">Все новости →</a>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "afisha" && (
+          <div>
+            {eventsLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка афиши...</div>}
+            {eventsError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{eventsError}</div>}
+            {!eventsLoading && !eventsError && events.length === 0 && (
+              <div className="small muted" style={{padding:"12px 0"}}>Мероприятий пока нет</div>
+            )}
+            {events.map(item => (
+              <a key={item.id} href={item.sourceUrl || "/afisha"} target="_blank" rel="noopener noreferrer" style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 4px",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                textDecoration: "none", color: "inherit",
+                borderRadius: 8, transition: "background 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt="" style={{
+                    width: 64, height: 48, objectFit: "cover",
+                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                  }} onError={e => e.currentTarget.style.display = "none"} />
+                ) : (
+                  <div style={{
+                    width: 64, height: 48, borderRadius: 6, flexShrink: 0,
+                    background: "rgba(124,58,237,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem"
+                  }}>🎭</div>
+                )}
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+                    overflow: "hidden", display: "-webkit-box",
+                    WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                  }}>{item.title}</div>
+                  <div style={{display:"flex", gap:8, marginTop:3, alignItems:"center", flexWrap:"wrap"}}>
+                    {item.eventDate && (
+                      <span className="small muted">
+                        🗓 {new Date(item.eventDate + "T00:00:00").toLocaleDateString("ru-RU", {day:"numeric", month:"long"})}
+                      </span>
+                    )}
+                    {item.venue && <span className="small muted">📍 {item.venue}</span>}
+                    {item.price && <span style={{fontSize:11, fontWeight:700, color:"#fbbf24"}}>{item.price}</span>}
+                  </div>
+                </div>
+              </a>
+            ))}
+            <div style={{marginTop:10, textAlign:"right"}}>
+              <a className="btn smallbtn secondary" href="/afisha">Вся афиша →</a>
+            </div>
+          </div>
+        )}
+
         {activeTab === "places" && (
           <div className="list">
             <div className="list-item">
@@ -521,56 +638,6 @@ function CityTabs() {
           </div>
         )}
 
-        {activeTab === "news" && (
-          <div>
-            {newsLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка новостей...</div>}
-            {newsError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{newsError}</div>}
-            {!newsLoading && !newsError && news.length === 0 && (
-              <div className="small muted" style={{padding:"12px 0"}}>Новостей пока нет</div>
-            )}
-            {news.map(item => (
-              <a key={item.id} href={"/news/" + item.id} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 4px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
-                textDecoration: "none", color: "inherit",
-                cursor: "pointer",
-                borderRadius: 8,
-                transition: "background 0.15s"
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt="" style={{
-                    width: 64, height: 48, objectFit: "cover",
-                    borderRadius: 6, flexShrink: 0,
-                    background: "rgba(255,255,255,0.05)"
-                  }} onError={e => e.currentTarget.style.display = "none"} />
-                ) : (
-                  <div style={{
-                    width: 64, height: 48, borderRadius: 6, flexShrink: 0,
-                    background: "rgba(255,255,255,0.07)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "1.4rem"
-                  }}>📰</div>
-                )}
-                <div style={{flex: 1, minWidth: 0}}>
-                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
-                    overflow: "hidden", display: "-webkit-box",
-                    WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
-                  }}>{item.title}</div>
-                  <div className="small muted" style={{marginTop: 3}}>
-                    {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString("ru-RU") : ""}
-                  </div>
-                </div>
-              </a>
-            ))}
-            <div style={{marginTop:10, textAlign:"right"}}>
-              <a className="btn smallbtn secondary" href="/news">Все новости →</a>
-            </div>
-          </div>
-        )}
       </div>
     </section>
   );
