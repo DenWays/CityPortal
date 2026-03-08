@@ -751,3 +751,18 @@ a:hover { text-decoration: underline; }
 .profile-dropdown-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(124,58,237,0.85);
 }
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-slide-down {
+  animation: fadeSlideDown 0.22s ease forwards;
+}

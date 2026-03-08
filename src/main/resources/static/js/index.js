@@ -793,7 +793,7 @@ function TaxiWidget() {
                     border: "1px solid rgba(255,255,255,0.07)",
                     transition: "background 0.15s"
                   }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
                     onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
                   >
                     <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

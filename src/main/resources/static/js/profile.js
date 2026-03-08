@@ -375,7 +375,7 @@ function SavedAddressesSection() {
         {/* Add form */}
         <div style={{ marginTop: 16 }}>
           {adding ? (
-            <form onSubmit={handleAdd} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <form onSubmit={handleAdd} className="fade-slide-down" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <input
                 className="input"
                 value={newLabel}
@@ -491,7 +491,7 @@ function RouteAddressField({ label, value, onChange, savedAddresses }) {
 
 function RouteForm({ label, setLabel, from, setFrom, to, setTo, onSubmit, onCancel, submitText, savedAddresses }) {
   return (
-    <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <form onSubmit={onSubmit} className="fade-slide-down" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <input
         className="input"
         value={label}

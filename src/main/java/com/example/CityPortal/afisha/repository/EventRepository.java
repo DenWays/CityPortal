@@ -15,6 +15,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     boolean existsBySourceUrl(String sourceUrl);
     Optional<Event> findBySourceUrl(String sourceUrl);
     Page<Event> findAllByOrderByEventDateAsc(Pageable pageable);
+    Page<Event> findAllByEventDateGreaterThanEqualOrderByEventDateAsc(LocalDate date, Pageable pageable);
 
     @Query(value = "SELECT * FROM event e WHERE " +
            "(CAST(:title AS text) IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', CAST(:title AS text), '%'))) AND " +

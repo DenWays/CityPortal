@@ -238,7 +238,7 @@ public class AfishaServiceImpl implements AfishaService {
 
     @Override
     public Page<EventDto> getAll(Pageable pageable) {
-        return eventRepository.findAllByOrderByEventDateAsc(pageable).map(this::toDto);
+        return eventRepository.findAllByEventDateGreaterThanEqualOrderByEventDateAsc(LocalDate.now(), pageable).map(this::toDto);
     }
 
     @Override
@@ -246,6 +246,9 @@ public class AfishaServiceImpl implements AfishaService {
         String titleParam = (title != null && !title.isBlank()) ? title.trim() : null;
         LocalDate from = parseIsoDate(dateFrom);
         LocalDate to   = parseIsoDate(dateTo);
+        if (from == null) {
+            from = LocalDate.now();
+        }
         return eventRepository.search(titleParam, from, to, pageable).map(this::toDto);
     }
 
