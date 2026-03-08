@@ -33,7 +33,7 @@ function WeatherIcon({ name, className }) {
 
 function Widget({ title, children }) {
   return (
-    <div className="widget">
+    <div className="widget taxi-widget">
       <div className="widget-title">{title}</div>
       <div className="widget-body">{children}</div>
     </div>
@@ -521,7 +521,7 @@ function MapWidget() {
   };
 
   return (
-    <div className="widget map-widget">
+    <div className="widget map-widget widget-hover">
       <div className="widget-title">🗺️ Карта города</div>
       <div className="widget-body">
 
@@ -726,16 +726,16 @@ function TaxiWidget() {
     : "—";
 
   return (
-    <div className="widget">
+    <div className="widget taxi-widget widget-hover">
       {/* Two-column layout: title row spans full width at top, then content splits left/right */}
       <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
 
         {/* Left column: title + price info + button */}
         <div style={{ flex: 1, minWidth: 0, paddingRight: 14, display: "flex", flexDirection: "column" }}>
-          <div className="widget-title" style={{ marginBottom: 8 }}>🚕 Такси — {data.city}</div>
+          <div className="widget-title" style={{ marginBottom: 6 }}>🚕 Такси — {data.city}</div>
           <a href="/taxi" style={{ textDecoration: "none", color: "inherit", display: "block" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
-              <span style={{ fontSize: "2.4rem", lineHeight: 1 }}>🚕</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+              <span style={{ fontSize: "2rem", lineHeight: 1 }}>🚕</span>
               <div>
                 <div className="big" style={{ color: "#fbbf24", lineHeight: 1 }}>{priceText}</div>
                 <div className="small" style={{ marginTop: 2 }}>
@@ -744,7 +744,7 @@ function TaxiWidget() {
               </div>
             </div>
             <div className="small muted" style={{ marginBottom: 4 }}>пр. Победы, 13 → пр. Победы, 178/1</div>
-            <div className="small muted" style={{ marginBottom: 8 }}>Нажмите, чтобы рассчитать маршрут →</div>
+            <div className="small muted" style={{ marginBottom: 6 }}>Нажмите, чтобы рассчитать маршрут →</div>
           </a>
           <div style={{ marginTop: "auto" }}>
             {data.deepLink && (
@@ -754,10 +754,10 @@ function TaxiWidget() {
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "7px 14px",
+                  padding: "6px 12px",
                   background: "linear-gradient(135deg, #fc0, #ff8c00)",
                   borderRadius: 10, textDecoration: "none", color: "#1a1a1a",
-                  fontWeight: 700, fontSize: 13,
+                  fontWeight: 700, fontSize: 12,
                   boxShadow: "0 2px 10px rgba(255,200,0,0.2)"
                 }}
               >
@@ -772,7 +772,7 @@ function TaxiWidget() {
 
         {/* Right column: routes header at same level as widget title */}
         <div style={{ flex: 1, minWidth: 0, paddingLeft: 14, display: "flex", flexDirection: "column" }}>
-          <div className="widget-title" style={{ marginBottom: 8 }}>⭐ Избранные маршруты</div>
+          <div className="widget-title" style={{ marginBottom: 6 }}>⭐ Избранные маршруты</div>
           {favorites.length === 0 ? (
             <a href="/profile" style={{ textDecoration: "none" }}>
               <div className="small muted" style={{ lineHeight: 1.5 }}>

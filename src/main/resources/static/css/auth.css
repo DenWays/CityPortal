@@ -322,8 +322,13 @@ a:hover { text-decoration: underline; }
   border-radius: 16px;
 }
 
+.taxi-widget{
+  grid-column: span 6;
+}
+
 @media (max-width: 920px){
   .widget{ grid-column: span 12; }
+  .taxi-widget{ grid-column: span 12; }
 }
 
 .widget-title{
@@ -482,6 +487,16 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 8px 32px rgba(124,58,237,0.18);
   transform: translateY(-2px);
   text-decoration: none;
+}
+
+/* Same glow for non-link interactive widgets (map, taxi) */
+.widget-hover{
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.widget-hover:hover{
+  border-color: rgba(124,58,237,0.55);
+  box-shadow: 0 8px 32px rgba(124,58,237,0.18);
 }
 
 .weather-scroll-more{
@@ -688,13 +703,13 @@ a:hover { text-decoration: underline; }
 /* Taxi widget favorite routes scrollable list */
 .taxi-favs-scroll {
   overflow-y: auto;
-  max-height: 180px;
+  max-height: 110px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding-right: 6px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(251,191,36,0.35) rgba(255,255,255,0.04);
+  scrollbar-color: rgba(124,58,237,0.5) rgba(255,255,255,0.04);
 }
 
 .taxi-favs-scroll::-webkit-scrollbar {
@@ -708,13 +723,13 @@ a:hover { text-decoration: underline; }
 }
 
 .taxi-favs-scroll::-webkit-scrollbar-thumb {
-  background: rgba(251,191,36,0.4);
+  background: rgba(124,58,237,0.5);
   border-radius: 4px;
   transition: background 0.2s;
 }
 
 .taxi-favs-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(251,191,36,0.7);
+  background: rgba(124,58,237,0.85);
 }
 
 /* Profile page — address dropdown in route form */
@@ -729,10 +744,10 @@ a:hover { text-decoration: underline; }
 }
 
 .profile-dropdown-scroll::-webkit-scrollbar-thumb {
-  background: rgba(251,191,36,0.4);
+  background: rgba(124,58,237,0.5);
   border-radius: 4px;
 }
 
 .profile-dropdown-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(251,191,36,0.7);
+  background: rgba(124,58,237,0.85);
 }

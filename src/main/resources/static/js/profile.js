@@ -145,33 +145,40 @@ function MiniMapPicker({ onPick, initialAddress, mapId }) {
 function CollapsibleSection({ title, children }) {
   const [open, setOpen] = useState(true);
   const [height, setHeight] = useState("auto");
+  const [overflowVisible, setOverflowVisible] = useState(true);
   const contentRef = useRef(null);
 
-  // On first render record real height
   useEffect(() => {
     if (contentRef.current) {
       setHeight(contentRef.current.scrollHeight + "px");
     }
   }, []);
 
-  // Whenever children change (e.g. list loaded) update height
   useEffect(() => {
-    if (open && contentRef.current) {
+    if (open && height !== "auto" && contentRef.current) {
       setHeight(contentRef.current.scrollHeight + "px");
     }
   });
 
   const toggle = () => {
     if (open) {
-      // snapshot current height then animate to 0
+      setOverflowVisible(false);
       if (contentRef.current) setHeight(contentRef.current.scrollHeight + "px");
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setHeight("0px"));
       });
     } else {
+      setOverflowVisible(false);
       if (contentRef.current) setHeight(contentRef.current.scrollHeight + "px");
     }
     setOpen(o => !o);
+  };
+
+  const handleTransitionEnd = () => {
+    if (open) {
+      setOverflowVisible(true);
+      setHeight("auto");
+    }
   };
 
   return (
@@ -189,8 +196,9 @@ function CollapsibleSection({ title, children }) {
       </div>
       <div
         ref={contentRef}
+        onTransitionEnd={handleTransitionEnd}
         style={{
-          overflow: "hidden",
+          overflow: overflowVisible ? "visible" : "hidden",
           height: height,
           transition: "height 0.38s cubic-bezier(0.4,0,0.2,1)",
         }}
@@ -396,6 +404,7 @@ function SavedAddressesSection() {
 function RouteAddressField({ label, value, onChange, savedAddresses }) {
   const [inputVal, setInputVal] = useState(value.address || "");
   const [showFavs, setShowFavs] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const wrapRef = useRef(null);
 
   useEffect(() => {
@@ -408,11 +417,34 @@ function RouteAddressField({ label, value, onChange, savedAddresses }) {
     return () => document.removeEventListener("mousedown", h);
   }, []);
 
+  const handleFocus = () => {
+    if (wrapRef.current) {
+      const rect = wrapRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenUp(spaceBelow < 160);
+    }
+    setShowFavs(true);
+  };
+
   const filtered = inputVal.length >= 1
     ? savedAddresses.filter(a =>
         a.label.toLowerCase().includes(inputVal.toLowerCase()) ||
         a.address.toLowerCase().includes(inputVal.toLowerCase()))
     : savedAddresses;
+
+  const dropdownStyle = {
+    position: "absolute",
+    left: 0, right: 0, zIndex: 999,
+    background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+    maxHeight: 138, overflowY: "auto",
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(124,58,237,0.5) rgba(255,255,255,0.04)",
+    ...(openUp
+      ? { bottom: "calc(100% + 4px)", top: "auto" }
+      : { top: "calc(100% + 4px)", bottom: "auto" })
+  };
 
   return (
     <div ref={wrapRef} style={{ position: "relative" }}>
@@ -421,34 +453,30 @@ function RouteAddressField({ label, value, onChange, savedAddresses }) {
           className="input"
           value={inputVal}
           onChange={e => { setInputVal(e.target.value); onChange({ address: e.target.value, lat: null, lon: null }); }}
-          onFocus={() => setShowFavs(true)}
+          onFocus={handleFocus}
           placeholder={label}
           style={{ flex: 1 }}
         />
         {savedAddresses.length > 0 && (
           <button type="button" className="btn smallbtn secondary"
-            onClick={() => setShowFavs(o => !o)} style={{ flexShrink: 0 }}>⭐</button>
+            onClick={() => {
+              if (wrapRef.current) {
+                const rect = wrapRef.current.getBoundingClientRect();
+                setOpenUp(window.innerHeight - rect.bottom < 160);
+              }
+              setShowFavs(o => !o);
+            }} style={{ flexShrink: 0 }}>⭐</button>
         )}
       </div>
       {showFavs && filtered.length > 0 && (
-        <ul style={{
-          position: "absolute", top: "100%", left: 0, right: 0, zIndex: 999,
-          background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-          maxHeight: 138, overflowY: "auto",
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(251,191,36,0.4) rgba(255,255,255,0.04)"
-        }}
-          className="profile-dropdown-scroll"
-        >
+        <ul style={dropdownStyle} className="profile-dropdown-scroll">
           {filtered.map((a, i) => (
             <li key={i} onMouseDown={() => {
               setInputVal(a.address);
               onChange({ address: a.address, lat: a.lat, lon: a.lon });
               setShowFavs(false);
             }} style={{ padding: "9px 14px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               <b>{a.label}</b>
@@ -735,7 +763,6 @@ function ProfilePage() {
       <main className="main">
         <section className="hero">
           <h1 className="hero-title">Ваш аккаунт</h1>
-          <p className="hero-text">Тестовая страница профиля.</p>
         </section>
 
         <section className="section">
