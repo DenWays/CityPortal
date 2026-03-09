@@ -124,9 +124,7 @@ public class NewsServiceImpl implements NewsService {
         LocalDateTime dt = tryParseDateTime(dateAttr);
         if (dt == null) return null;
 
-        // Если в атрибуте только дата (без времени) — пробуем извлечь время из текста тега
         if (!dateAttr.contains("T") && !dateAttr.contains(" ")) {
-            // Ищем время вида HH:mm в тексте тега (включая дочерние span)
             String text = timeEl.text();
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d{1,2}):(\\d{2})").matcher(text);
             if (m.find()) {
