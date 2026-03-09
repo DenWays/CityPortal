@@ -62,6 +62,8 @@ public class NewsServiceImpl implements NewsService {
         LocalDate today = LocalDate.now();
         LocalDate stopBefore = today.minusDays(3);
         int pageNum = 1;
+        final int MAX_OLD_IN_ROW = 5;
+        int oldInRow = 0;
 
         try {
             outer:
@@ -87,10 +89,16 @@ public class NewsServiceImpl implements NewsService {
                         if (timeEl != null) {
                             LocalDateTime dt = parseTimeElement(timeEl);
                             if (dt != null && dt.toLocalDate().isBefore(stopBefore)) {
-                                log.info("Карточка старше {} дней ({}), останавливаем парсинг", 3, dt.toLocalDate());
-                                break outer;
+                                oldInRow++;
+                                log.info("Карточка старше {} дней ({}) — пропускаем ({} подряд)", 3, dt.toLocalDate(), oldInRow);
+                                if (oldInRow >= MAX_OLD_IN_ROW) {
+                                    log.info("{} карточек подряд старше {} дней, останавливаем парсинг", MAX_OLD_IN_ROW, 3);
+                                    break outer;
+                                }
+                                continue;
                             }
                         }
+                        oldInRow = 0;
                         saved += processCard(card);
                     }
                     catch (Exception e) {
