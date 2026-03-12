@@ -181,7 +181,9 @@ public class TaxiServiceImpl implements TaxiService {
             maxPrice = toInt(opt.get("max_price"));
 
         Integer waitingRaw = toInt(opt.get("waiting_time"));
-        Integer waiting = (waitingRaw != null && waitingRaw > 0) ? Math.max(1, (int) Math.round(waitingRaw / 60.0)) : waitingRaw;
+        Integer waiting = (waitingRaw != null && waitingRaw > 0)
+                ? Math.max(1, (int) Math.round(waitingRaw / 60.0))
+                : null;
 
         String currency = str(opt, "currency");
 
