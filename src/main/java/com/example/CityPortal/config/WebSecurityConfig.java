@@ -58,7 +58,9 @@ public class WebSecurityConfig {
                                 "/news", "/news/**", "/news.html",
                                 "/api/news/**",
                                 "/afisha", "/afisha/**", "/afisha.html",
-                                "/api/afisha/**"
+                                "/api/afisha/**",
+                                "/routes", "/routes.html",
+                                "/api/routes/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/account").authenticated()

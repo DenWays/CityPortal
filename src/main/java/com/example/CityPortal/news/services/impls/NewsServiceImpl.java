@@ -7,6 +7,7 @@ import com.example.CityPortal.news.repository.NewsRepository;
 import com.example.CityPortal.news.services.NewsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.net.ssl.*;
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Locale;
 
 @Slf4j
@@ -34,7 +37,23 @@ import java.util.Locale;
 public class NewsServiceImpl implements NewsService {
     private static final String BASE_URL  = "https://orenburg.ru";
     private static final String NEWS_URL  = BASE_URL + "/presscenter/news/";
-    private static final int    TIMEOUT_MS = 12_000;
+    private static final String RSS_URL   = BASE_URL + "/rss/";
+    private static final int    TIMEOUT_MS = 15_000;
+    private static final int    MAX_RETRIES = 3;
+
+    private static final List<String> USER_AGENTS = List.of(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+    );
+    private static int uaIndex = 0;
+
+    private static String nextUserAgent() {
+        String ua = USER_AGENTS.get(uaIndex % USER_AGENTS.size());
+        uaIndex++;
+        return ua;
+    }
+
     private final NewsRepository newsRepository;
     private static final SSLSocketFactory TRUST_ALL_SSL = buildTrustAllSslFactory();
 
@@ -58,9 +77,23 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     public int fetchAndSave() {
+        log.info("Запуск парсинга новостей orenburg.ru (HTML)...");
+        int result = fetchHtml();
+        if (result < 0) {
+            log.warn("HTML-парсинг недоступен (сайт вернул 503/ошибку), пробуем RSS...");
+            result = fetchRss();
+            if (result < 0) {
+                log.warn("RSS-парсинг тоже недоступен — пропускаем цикл");
+                return 0;
+            }
+        }
+        log.info("Всего новостей сохранено: {}", result);
+        return result;
+    }
+
+    private int fetchHtml() {
         int saved = 0;
-        LocalDate today = LocalDate.now();
-        LocalDate stopBefore = today.minusDays(3);
+        LocalDate stopBefore = LocalDate.now().minusDays(3);
         int pageNum = 1;
         final int MAX_OLD_IN_ROW = 5;
         int oldInRow = 0;
@@ -69,17 +102,25 @@ public class NewsServiceImpl implements NewsService {
             outer:
             while (true) {
                 String url = pageNum == 1 ? NEWS_URL : NEWS_URL + "?nav-news=page-" + pageNum;
-
-                Document listPage = Jsoup
-                        .connect(url)
-                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                        .timeout(TIMEOUT_MS)
-                        .sslSocketFactory(TRUST_ALL_SSL)
-                        .get();
+                Document listPage;
+                try {
+                    listPage = connectWithRetry(url);
+                }
+                catch (HttpStatusException hse) {
+                    if (hse.getStatusCode() == 503 || hse.getStatusCode() == 429) {
+                        log.warn("HTML-парсинг: сервер вернул {} на стр. {} — сайт недоступен", hse.getStatusCode(), pageNum);
+                        return -1;
+                    }
+                    log.error("HTML-парсинг: HTTP {} на {}", hse.getStatusCode(), url);
+                    break;
+                }
+                catch (IOException e) {
+                    log.warn("HTML-парсинг: сетевая ошибка на стр. {}: {}", pageNum, e.getMessage());
+                    return -1;
+                }
 
                 Elements cards = listPage.select("article.list__item");
-                if (cards.isEmpty())
-                    break;
+                if (cards.isEmpty()) break;
 
                 log.info("Страница {}: найдено карточек {}", pageNum, cards.size());
 
@@ -90,9 +131,8 @@ public class NewsServiceImpl implements NewsService {
                             LocalDateTime dt = parseTimeElement(timeEl);
                             if (dt != null && dt.toLocalDate().isBefore(stopBefore)) {
                                 oldInRow++;
-                                log.info("Карточка старше {} дней ({}) — пропускаем ({} подряд)", 3, dt.toLocalDate(), oldInRow);
                                 if (oldInRow >= MAX_OLD_IN_ROW) {
-                                    log.info("{} карточек подряд старше {} дней, останавливаем парсинг", MAX_OLD_IN_ROW, 3);
+                                    log.info("{} карточек подряд старше 3 дней — останавливаем", MAX_OLD_IN_ROW);
                                     break outer;
                                 }
                                 continue;
@@ -110,19 +150,151 @@ public class NewsServiceImpl implements NewsService {
                 if (!hasNext) break;
                 pageNum++;
             }
+        } catch (Exception e) {
+            log.error("Непредвиденная ошибка HTML-парсинга: {}", e.getMessage(), e);
         }
-        catch (Exception e) {
-            log.error("Ошибка парсинга orenburg.ru: {}", e.getMessage(), e);
+        return saved;
+    }
+
+    private int fetchRss() {
+        int saved = 0;
+        try {
+            Document rss = connectWithRetry(RSS_URL);
+            Elements items = rss.select("item");
+            if (items.isEmpty()) {
+                log.warn("RSS: элементов <item> не найдено");
+                return 0;
+            }
+            log.info("RSS: найдено {} элементов", items.size());
+            for (Element item : items) {
+                try {
+                    saved += processRssItem(item);
+                } catch (Exception e) {
+                    log.warn("RSS: ошибка обработки item: {}", e.getMessage());
+                }
+            }
+        }
+        catch (HttpStatusException hse) {
+            log.warn("RSS недоступен: HTTP {}", hse.getStatusCode());
+            return -1;
+        }
+        catch (IOException e) {
+            log.warn("RSS сетевая ошибка: {}", e.getMessage());
+            return -1;
+        }
+        return saved;
+    }
+
+    private int processRssItem(Element item) {
+        Element linkEl = item.selectFirst("link");
+        String link = linkEl != null ? linkEl.text().trim() : "";
+        if (link.isBlank()) link = item.select("link").text().trim();
+        if (link.isBlank())
+            return 0;
+        if (!link.matches(".*presscenter/news/\\d+/?.*"))
+            return 0;
+        if (newsRepository.existsBySourceUrl(link))
+            return 0;
+
+        Element titleEl = item.selectFirst("title");
+        String title = titleEl != null ? titleEl.text().trim() : "";
+        if (title.isBlank())
+            return 0;
+
+        Element pubDateEl = item.selectFirst("pubDate");
+        String pubDateRaw = pubDateEl != null ? pubDateEl.text().trim() : null;
+        LocalDateTime publishedAt = pubDateRaw != null ? tryParseRssDate(pubDateRaw) : null;
+
+        String description = null;
+        Element descEl = item.selectFirst("description");
+        if (descEl != null) {
+            String raw = descEl.text().trim();
+            if (!raw.isBlank())
+                description = Jsoup.parse(raw).text();
         }
 
-        log.info("Всего новостей сохранено за последние 3 дня: {}", saved);
-        return saved;
+        String imageUrl = null;
+        Element enclosure = item.selectFirst("enclosure[type^=image]");
+        if (enclosure != null)
+            imageUrl = enclosure.attr("url");
+        if (imageUrl == null || imageUrl.isBlank()) {
+            Element media = item.selectFirst("media|content, media\\:content");
+            if (media != null)
+                imageUrl = media.attr("url");
+        }
+        if (imageUrl != null && !imageUrl.isBlank() && !imageUrl.startsWith("http")) {
+            imageUrl = BASE_URL + imageUrl;
+        }
+
+        News news = new News();
+        news.setTitle(title);
+        news.setDescription(description);
+        news.setContent(null);
+        news.setImageUrl(imageUrl != null && !imageUrl.isBlank() ? imageUrl : null);
+        news.setSourceUrl(link);
+        news.setPublishedAt(publishedAt != null ? publishedAt : LocalDateTime.now());
+        news.setParsedAt(LocalDateTime.now());
+        newsRepository.save(news);
+        log.debug("RSS сохранено: {}", title);
+        return 1;
+    }
+
+    private Document connectWithRetry(String url) throws IOException {
+        IOException lastEx = null;
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return Jsoup.connect(url)
+                        .userAgent(nextUserAgent())
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                        .header("Accept-Language", "ru-RU,ru;q=0.9,en;q=0.8")
+                        .header("Referer", BASE_URL + "/")
+                        .timeout(TIMEOUT_MS)
+                        .sslSocketFactory(TRUST_ALL_SSL)
+                        .get();
+            }
+            catch (HttpStatusException hse) {
+                if (hse.getStatusCode() == 503 || hse.getStatusCode() == 429) throw hse;
+                lastEx = hse;
+                log.warn("Попытка {}/{}: HTTP {} для {}", attempt, MAX_RETRIES, hse.getStatusCode(), url);
+            }
+            catch (IOException e) {
+                lastEx = e;
+                log.warn("Попытка {}/{}: сетевая ошибка для {}: {}", attempt, MAX_RETRIES, url, e.getMessage());
+            }
+            if (attempt < MAX_RETRIES) {
+                try {
+                    Thread.sleep(1500L * attempt);
+                }
+                catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Прервано", ie);
+                }
+            }
+        }
+        throw lastEx;
+    }
+
+    private LocalDateTime tryParseRssDate(String raw) {
+        String[] patterns = {
+            "EEE, dd MMM yyyy HH:mm:ss Z",
+            "EEE, dd MMM yyyy HH:mm:ss zzz",
+            "dd MMM yyyy HH:mm:ss Z"
+        };
+        for (String p : patterns) {
+            try {
+                return ZonedDateTime.parse(raw.trim(),
+                        DateTimeFormatter.ofPattern(p, Locale.ENGLISH)).toLocalDateTime();
+            }
+            catch (DateTimeParseException ignored) {}
+        }
+        return tryParseDateTime(raw);
     }
 
     private LocalDateTime parseTimeElement(Element timeEl) {
         String dateAttr = timeEl.attr("datetime").trim();
         LocalDateTime dt = tryParseDateTime(dateAttr);
-        if (dt == null) return null;
+        if (dt == null)
+            return null;
 
         if (!dateAttr.contains("T") && !dateAttr.contains(" ")) {
             String text = timeEl.text();
@@ -132,7 +304,8 @@ public class NewsServiceImpl implements NewsService {
                     int hour   = Integer.parseInt(m.group(1));
                     int minute = Integer.parseInt(m.group(2));
                     dt = dt.toLocalDate().atTime(hour, minute);
-                } catch (Exception ignored) {}
+                }
+                catch (Exception ignored) {}
             }
         }
         return dt;
@@ -225,12 +398,7 @@ public class NewsServiceImpl implements NewsService {
             }
         }
 
-        Document articleDoc = Jsoup
-                .connect(href)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .timeout(TIMEOUT_MS)
-                .sslSocketFactory(TRUST_ALL_SSL)
-                .get();
+        Document articleDoc = connectWithRetry(href);
 
         String content = null;
         Element textEl = articleDoc.selectFirst("div.detail__text");

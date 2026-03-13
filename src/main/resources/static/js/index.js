@@ -826,6 +826,10 @@ function CityTabs() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [eventsError, setEventsError] = useState(null);
 
+  const [routes, setRoutes] = useState([]);
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState(null);
+
   const switchTab = (id) => {
     if (id === activeTab) return;
     setVisible(false);
@@ -850,6 +854,16 @@ function CityTabs() {
       .then(data => setEvents(data.content || []))
       .catch(e => setEventsError(e.message))
       .finally(() => setEventsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setRoutesLoading(true);
+    setRoutesError(null);
+    fetch("/api/routes?page=0&size=5&random=true")
+      .then(r => { if (!r.ok) throw new Error("Ошибка загрузки маршрутов"); return r.json(); })
+      .then(data => setRoutes(data.content || []))
+      .catch(e => setRoutesError(e.message))
+      .finally(() => setRoutesLoading(false));
   }, []);
 
   const tabs = [
@@ -1002,20 +1016,49 @@ function CityTabs() {
         )}
 
         {activeTab === "routes" && (
-          <div className="list">
-            <div className="list-item">
-              <div>
-                <b>Маршрут: Центр за 2 часа</b>
-                <div className="small muted">8 точек • пешком • 2.1 км</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
-            </div>
-            <div className="list-item">
-              <div>
-                <b>Маршрут: Кофе + Парк</b>
-                <div className="small muted">4 точки • пешком • 1.4 км</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
+          <div>
+            {routesLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка маршрутов...</div>}
+            {routesError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{routesError}</div>}
+            {!routesLoading && !routesError && routes.length === 0 && (
+              <div className="small muted" style={{padding:"12px 0"}}>Маршруты ещё не загружены</div>
+            )}
+            {routes.map(item => (
+              <a key={item.id} href={item.sourceUrl || "/routes"} target="_blank" rel="noopener noreferrer" style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 4px",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                textDecoration: "none", color: "inherit",
+                borderRadius: 8, transition: "background 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt="" style={{
+                    width: 64, height: 48, objectFit: "cover",
+                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                  }} onError={e => e.currentTarget.style.display = "none"} />
+                ) : (
+                  <div style={{
+                    width: 64, height: 48, borderRadius: 6, flexShrink: 0,
+                    background: "rgba(124,58,237,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem"
+                  }}>🗺️</div>
+                )}
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+                    overflow: "hidden", display: "-webkit-box",
+                    WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
+                  }}>{item.title}</div>
+                  <div style={{display:"flex", gap:8, marginTop:3, alignItems:"center", flexWrap:"wrap"}}>
+                    {item.operatorName && <span className="small muted">🏢 {item.operatorName}</span>}
+                    {item.duration && <span className="small muted">⏱ {item.duration}</span>}
+                  </div>
+                </div>
+              </a>
+            ))}
+            <div style={{marginTop:10, textAlign:"right"}}>
+              <a className="btn smallbtn secondary" href="/routes">Все маршруты →</a>
             </div>
           </div>
         )}
@@ -1115,6 +1158,7 @@ function CityPortalHome() {
             <a className="btn secondary" href="/map">Карта</a>
             <a className="btn secondary" href="/traffic">Пробки</a>
             <a className="btn secondary" href="/taxi">Такси</a>
+            <a className="btn secondary" href="/routes">Маршруты</a>
           </div>
         </section>
 
