@@ -124,7 +124,6 @@ function WeatherWidget() {
   );
 }
 
-// ── Auto-disappearing success message ────────────────────────────────────────
 function SavedMessage({ onDone }) {
   React.useEffect(() => {
     const t = setTimeout(onDone, 2000);
@@ -135,7 +134,6 @@ function SavedMessage({ onDone }) {
   );
 }
 
-// ── Popup shown when user clicks on the map ──────────────────────────────────
 function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
   const [phase, setPhase]     = React.useState("idle");
   const [label, setLabel]     = React.useState("");
@@ -206,7 +204,10 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
             </div>
           )}
           <button className="btn smallbtn secondary" style={{ marginTop: 0, fontSize: 11, padding: "5px 10px" }}
-            onClick={() => alert("Построение маршрута — скоро!")}>
+            onClick={() => {
+              const params = new URLSearchParams({ toAddress: point.address, toLat: point.lat, toLon: point.lon, route: "1" });
+              window.location.href = `/map?${params.toString()}`;
+            }}>
             🗺️ Как добраться
           </button>
           <button className="btn smallbtn" style={{ marginTop: 0, fontSize: 11, padding: "5px 10px", background: "rgba(252,200,0,0.15)", borderColor: "rgba(252,200,0,0.35)", color: "#fcd34d" }}
@@ -697,7 +698,6 @@ function TaxiWidget() {
         setLoading(false);
       }
     })();
-    // Load favorite routes (silently ignore if not logged in)
     fetch("/api/taxi/favorites", { credentials: "same-origin" })
       .then(r => r.ok ? r.json() : [])
       .then(d => setFavorites(Array.isArray(d) ? d : []))
