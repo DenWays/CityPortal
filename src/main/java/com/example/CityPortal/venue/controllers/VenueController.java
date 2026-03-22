@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -19,12 +20,22 @@ public class VenueController {
     private final VenueService venueService;
 
     @GetMapping("/list")
-    public ResponseEntity<Page<VenueInfoDto>> listVenues(@RequestParam(defaultValue = "0") int page,
-                                                                                                @RequestParam(defaultValue = "12") int size) {
-        Page<VenueInfoDto> result = venueService.listAll(
-            PageRequest.of(page, Math.min(size, 50), Sort.by(Sort.Direction.DESC, "scrapedAt"))
-        );
+    public ResponseEntity<Page<VenueInfoDto>> listVenues(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(name = "category", required = false) List<String> categories) {
+        PageRequest pr = PageRequest.of(page, Math.min(size, 50), Sort.by(Sort.Direction.DESC, "scrapedAt"));
+        List<String> cats = (categories == null) ? List.of() : categories.stream().filter(c -> !c.isBlank()).toList();
+        Page<VenueInfoDto> result = (q.isBlank() && cats.isEmpty())
+                ? venueService.listAll(pr)
+                : venueService.listFiltered(q, cats, pr);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        return ResponseEntity.ok(venueService.getCategories());
     }
 
     @GetMapping("/{id:[0-9]+}")

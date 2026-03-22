@@ -1,4 +1,4 @@
-const { useEffect, useState, useRef, useCallback } = React;
+﻿const { useEffect, useState, useRef, useCallback } = React;
 
 function TopBar() {
   const [account, setAccount] = useState(null);
@@ -35,7 +35,12 @@ function TopBar() {
       <div className="topbar-right">
         {account ? (
           <>
-            <span className="small">Вы вошли как: <b>{account.login}</b></span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="small">Вы вошли как: <b>{account.login}</b></span>
+              {account.role && account.role.name === "ROLE_ADMIN" && (
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 7px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
+              )}
+            </div>
             <a className="btn smallbtn secondary" href="/profile">Профиль</a>
             <button className="btn smallbtn secondary" onClick={logout}>Выйти</button>
           </>

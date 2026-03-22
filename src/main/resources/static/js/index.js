@@ -1,4 +1,4 @@
-const { useEffect, useState } = React;
+﻿const { useEffect, useState } = React;
 
 function iconEmoji(name) {
   const map = {
@@ -134,11 +134,16 @@ function SavedMessage({ onDone }) {
   );
 }
 
-function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
-  const [phase, setPhase]     = React.useState("idle");
-  const [label, setLabel]     = React.useState("");
-  const [addMode, setAddMode] = React.useState(false);
-  const [errMsg, setErrMsg]   = React.useState("");
+function PointPopup({ point, onClose, onSaved, isLoggedIn, userRole }) {
+  const [phase, setPhase]           = React.useState("idle");
+  const [label, setLabel]           = React.useState("");
+  const [addMode, setAddMode]       = React.useState(false);
+  const [errMsg, setErrMsg]         = React.useState("");
+  const [venueLoading, setVenueLoading] = React.useState(false);
+  const [venueMsg, setVenueMsg]     = React.useState(null);
+
+  const isAdmin = userRole === "ROLE_ADMIN";
+  const isVenue = !!(point && (point.name || point.yandexOrgUrl));
 
   if (!point) return null;
 
@@ -170,10 +175,56 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
     }
   }
 
+  async function handleVenueClick() {
+    setVenueMsg(null);
+    if (!isLoggedIn) { setVenueMsg({ type: "not_logged_in" }); return; }
+    setVenueLoading(true);
+    try {
+      const checkParams = new URLSearchParams({
+        lat: point.lat, lon: point.lon,
+        name: point.name || point.address || "",
+        address: point.address || ""
+      });
+      const checkData = await fetch(`/api/venue/check?${checkParams}`).then(r => r.json());
+      if (checkData && checkData.exists && checkData.id && checkData.id !== "null") {
+        window.location.href = `/venues/${checkData.id}`; return;
+      }
+      if (!isAdmin) { setVenueMsg({ type: "not_found" }); setVenueLoading(false); return; }
+      let data;
+      if (point.yandexOrgUrl) {
+        const params = new URLSearchParams({ yandexOrgUrl: point.yandexOrgUrl, name: point.name || point.address, address: point.address || "", lat: point.lat, lon: point.lon });
+        data = await fetch(`/api/venue/info-by-url?${params}`).then(r => r.json());
+      } else {
+        const params = new URLSearchParams({ name: point.name || point.address, address: point.address || "", lat: point.lat, lon: point.lon });
+        data = await fetch(`/api/venue/info?${params}`).then(r => r.json());
+      }
+      if (data && data.id) { window.location.href = `/venues/${data.id}`; return; }
+      setVenueMsg({ type: "load_failed" });
+    } catch (_) { setVenueMsg({ type: "load_failed" }); }
+    setVenueLoading(false);
+  }
+
+  async function handleAdminLoad() {
+    setVenueMsg(null); setVenueLoading(true);
+    try {
+      let data;
+      if (point.yandexOrgUrl) {
+        const params = new URLSearchParams({ yandexOrgUrl: point.yandexOrgUrl, name: point.name || point.address, address: point.address || "", lat: point.lat, lon: point.lon });
+        data = await fetch(`/api/venue/info-by-url?${params}`).then(r => r.json());
+      } else {
+        const params = new URLSearchParams({ name: point.name || point.address, address: point.address || "", lat: point.lat, lon: point.lon });
+        data = await fetch(`/api/venue/info?${params}`).then(r => r.json());
+      }
+      if (data && data.id) { window.location.href = `/venues/${data.id}`; return; }
+      setVenueMsg({ type: "load_failed" });
+    } catch (_) { setVenueMsg({ type: "load_failed" }); }
+    setVenueLoading(false);
+  }
+
   return (
     <div style={{
       position: "absolute", bottom: 16, left: 8,
-      zIndex: 500, minWidth: 220, maxWidth: 290,
+      zIndex: 500, minWidth: 220, maxWidth: 300,
       background: "rgba(15,17,30,0.97)", border: "1px solid rgba(255,255,255,0.13)",
       borderRadius: 14, padding: "12px 14px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       backdropFilter: "blur(12px)"
@@ -189,11 +240,12 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
         </div>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
       </div>
+
       {!addMode && phase !== "saved" && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {isLoggedIn && (
             <button className="btn smallbtn" style={{ marginTop: 0, fontSize: 11, padding: "5px 10px", background: "rgba(251,191,36,0.15)", borderColor: "rgba(251,191,36,0.35)", color: "#fbbf24" }}
-              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); }}>
+              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); setVenueMsg(null); }}>
               ⭐ В избранное
             </button>
           )}
@@ -217,8 +269,31 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn }) {
             }}>
             🚕 Заказать такси
           </button>
+          {isVenue && (
+            <button className="btn smallbtn" disabled={venueLoading}
+              style={{ marginTop: 0, fontSize: 11, padding: "5px 10px", fontWeight: 700,
+                background: "rgba(96,165,250,0.12)", borderColor: "rgba(96,165,250,0.35)", color: "#60a5fa",
+                opacity: venueLoading ? 0.6 : 1 }}
+              onClick={handleVenueClick}>
+              {venueLoading ? "⏳…" : "🏢 Об объекте"}
+            </button>
+          )}
         </div>
       )}
+
+      {/* Venue status message */}
+      {venueMsg && (
+        <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 8, fontSize: 11,
+          background: venueMsg.type === "not_found" ? "rgba(251,191,36,0.07)" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.05)" : "rgba(248,113,113,0.07)",
+          border: `1px solid ${venueMsg.type === "not_found" ? "rgba(251,191,36,0.2)" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.1)" : "rgba(248,113,113,0.2)"}`,
+          color: venueMsg.type === "not_found" ? "#fbbf24" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.7)" : "#f87171"
+        }}>
+          {venueMsg.type === "not_found" && "🏗️ Объект пока не добавлен на сайт. Ожидайте."}
+          {venueMsg.type === "not_logged_in" && <><a href="/login" style={{ color: "#60a5fa", textDecoration: "underline" }}>Войдите</a>, чтобы просмотреть объект.</>}
+          {venueMsg.type === "load_failed" && <>Не удалось загрузить.{" "}<button onClick={handleAdminLoad} style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 11, textDecoration: "underline", padding: 0 }}>Повторить</button></>}
+        </div>
+      )}
+
       {addMode === true && phase !== "saved" && (
         <form onSubmit={handleSave} style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 6 }}>
           <input className="input" value={label} onChange={e => setLabel(e.target.value)}
@@ -251,6 +326,7 @@ function MapWidget() {
   const [dropdownOpen, setDropdownOpen]     = useState(false);
   const [clickedPoint, setClickedPoint]     = useState(null);
   const [isLoggedIn, setIsLoggedIn]         = useState(false);
+  const [userRole, setUserRole]             = useState(null);
 
   const mapRef         = React.useRef(null);
   const initDone       = React.useRef(false);
@@ -270,8 +346,12 @@ function MapWidget() {
   useEffect(() => {
     fetch("/api/auth/account", { credentials: "same-origin" })
       .then(r => r.ok ? r.json() : null)
-      .then(data => setIsLoggedIn(!!data))
-      .catch(() => setIsLoggedIn(false));
+      .then(data => {
+        setIsLoggedIn(!!data);
+        if (data && data.role && data.role.name) setUserRole(data.role.name);
+        else setUserRole(null);
+      })
+      .catch(() => { setIsLoggedIn(false); setUserRole(null); });
   }, []);
 
   useEffect(() => {
@@ -317,7 +397,7 @@ function MapWidget() {
       controls: ["zoomControl", "geolocationControl"]
     });
 
-    function placeClickMarker(lat, lon, name) {
+    function placeClickMarker(lat, lon, name, yandexOrgUrl) {
       window.ymaps.geocode([lat, lon], { results: 1 }).then(res => {
         const geoObj = res.geoObjects.get(0);
         let address = null;
@@ -350,8 +430,38 @@ function MapWidget() {
           { hintContent: address }, { preset: "islands#blueDotIcon" }
         );
         mapRef.current.geoObjects.add(clickMarkerRef.current);
-        setClickedPoint({ lat, lon, address, name: finalName });
+        setClickedPoint({ lat, lon, address, name: finalName, yandexOrgUrl: yandexOrgUrl || null });
       });
+    }
+
+    function extractBalloonData() {
+      let name = null;
+      let yandexOrgUrl = null;
+      const balloonEl = document.querySelector("[class*='balloon__content']");
+      if (!balloonEl) return { name, yandexOrgUrl };
+      const heading = balloonEl.querySelector("h1, h2, h3, b, strong, [class*='title'], [class*='name']");
+      if (heading) name = heading.textContent.trim() || null;
+      if (!name) {
+        const first = balloonEl.textContent.trim().split(/[\n\r]+/)[0].trim();
+        if (first.length > 1 && first.length < 120) name = first;
+      }
+      const links = balloonEl.querySelectorAll("a[href]");
+      for (const link of links) {
+        const href = link.getAttribute("href") || "";
+        const text = link.textContent.trim().toLowerCase();
+        if ((href.includes("yandex.ru/maps") || href.startsWith("/maps")) &&
+            (href.includes("/org/") || href.includes("orgpage"))) {
+          yandexOrgUrl = href.startsWith("/") ? "https://yandex.ru" + href : href;
+          break;
+        }
+        if (text.includes("об организации") || text.includes("подробнее") || text.includes("организация")) {
+          if (href.startsWith("http") || href.startsWith("/")) {
+            yandexOrgUrl = href.startsWith("/") ? "https://yandex.ru" + href : href;
+            break;
+          }
+        }
+      }
+      return { name, yandexOrgUrl };
     }
 
     let lastCoords = null;
@@ -368,17 +478,34 @@ function MapWidget() {
       try {
         if (!lastCoords) return;
         const [lat, lon] = lastCoords;
-        let name = null;
-        const balloonEl = document.querySelector("[class*='balloon__content']");
-        if (balloonEl) {
-          const heading = balloonEl.querySelector("h1, h2, h3, b, strong, [class*='title'], [class*='name']");
-          if (heading) name = heading.textContent.trim() || null;
-          if (!name) {
-            const first = balloonEl.textContent.trim().split(/[\n\r]+/)[0].trim();
-            if (first.length > 1 && first.length < 120) name = first;
-          }
-        }
-        placeClickMarker(lat, lon, name);
+
+        const { name, yandexOrgUrl } = extractBalloonData();
+        if (yandexOrgUrl) { placeClickMarker(lat, lon, name, yandexOrgUrl); return; }
+
+        // Use MutationObserver to wait for balloon content to load
+        let resolved = false;
+        const observer = new MutationObserver(() => {
+          if (resolved) return;
+          try {
+            const { name: n2, yandexOrgUrl: url2 } = extractBalloonData();
+            if (url2) {
+              resolved = true;
+              observer.disconnect();
+              placeClickMarker(lat, lon, n2, url2);
+            }
+          } catch (_) {}
+        });
+        const balloonRoot = document.querySelector("[class*='balloon']") || document.body;
+        observer.observe(balloonRoot, { childList: true, subtree: true });
+
+        setTimeout(() => {
+          if (resolved) return;
+          observer.disconnect();
+          try {
+            const { name: n3, yandexOrgUrl: url3 } = extractBalloonData();
+            placeClickMarker(lat, lon, n3, url3);
+          } catch (_) { placeClickMarker(lat, lon, name, null); }
+        }, 800);
       } catch (_) {}
     });
 
@@ -607,7 +734,7 @@ function MapWidget() {
               border: "1px solid rgba(255,255,255,0.10)"
             }}
           />
-          <PointPopup point={clickedPoint} onClose={handlePopupClose} onSaved={handlePopupSaved} isLoggedIn={isLoggedIn} />
+          <PointPopup point={clickedPoint} onClose={handlePopupClose} onSaved={handlePopupSaved} isLoggedIn={isLoggedIn} userRole={userRole} />
         </div>
 
         <div style={{ marginTop: 8, textAlign: "right" }}>
@@ -1167,7 +1294,21 @@ function CityPortalHome() {
             <span className="small">Проверяем вход...</span>
           ) : account ? (
             <>
-              <span className="small">Вы вошли как: <b>{account.login}</b></span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span className="small">Вы вошли как: <b>{account.login}</b></span>
+                {account.role && account.role.name === "ROLE_ADMIN" && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: 0.5,
+                    padding: "2px 7px", borderRadius: 20,
+                    background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))",
+                    border: "1px solid rgba(167,139,250,0.45)",
+                    color: "#c4b5fd",
+                    textTransform: "uppercase"
+                  }}>
+                    👑 Admin
+                  </span>
+                )}
+              </div>
               <a className="btn smallbtn secondary" href="/profile">Профиль</a>
               <button className="btn smallbtn secondary" onClick={logout}>
                 Выйти

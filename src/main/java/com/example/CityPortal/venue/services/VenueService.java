@@ -3,6 +3,7 @@ package com.example.CityPortal.venue.services;
 import com.example.CityPortal.venue.dtos.VenueInfoDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.List;
 
 public interface VenueService {
     Long checkExists(Double lat, Double lon);
@@ -11,5 +12,7 @@ public interface VenueService {
     VenueInfoDto getVenueInfoByUrl(String yandexOrgUrl, String name, String address, Double lat, Double lon, boolean forceRefresh);
     VenueInfoDto getById(Long id);
     Page<VenueInfoDto> listAll(Pageable pageable);
+    Page<VenueInfoDto> listFiltered(String q, List<String> categories, Pageable pageable);
+    List<String> getCategories();
     String triggerSummarization(Long venueId);
 }

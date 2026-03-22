@@ -213,6 +213,21 @@ public class VenueServiceImpl implements VenueService {
         });
     }
 
+    @Override
+    public Page<VenueInfoDto> listFiltered(String q, List<String> categories, Pageable pageable) {
+        String qParam = (q == null || q.isBlank()) ? null : q.trim();
+        List<String> catsParam = (categories == null || categories.isEmpty()) ? null : categories;
+        return venueRepository.findFiltered(qParam, catsParam, pageable).map(v -> {
+            String summary = summarizationService.getLatestSummary(v.getId());
+            return toDto(v, List.of(), summary);
+        });
+    }
+
+    @Override
+    public List<String> getCategories() {
+        return venueRepository.findDistinctCategories();
+    }
+
     private VenueInfoDto errorDto(String name, Double lat, Double lon) {
         VenueInfoDto dto = new VenueInfoDto();
         dto.setName(name);

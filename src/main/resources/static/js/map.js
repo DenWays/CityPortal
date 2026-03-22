@@ -1,4 +1,4 @@
-const { useEffect, useState, useRef, useCallback } = React;
+﻿const { useEffect, useState, useRef, useCallback } = React;
 
 const DEFAULT_CENTER = [51.7727, 55.1039];
 const DEFAULT_ZOOM   = 13;
@@ -1057,14 +1057,16 @@ function VenueInfoPanel({ point, onClose }) {
   );
 }
 
-function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
+function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn, userRole }) {
   const [phase, setPhase]           = useState("idle");
   const [label, setLabel]           = useState("");
   const [addMode, setAddMode]       = useState(false);
   const [errMsg, setErrMsg]         = useState("");
   const [venueLoading, setVenueLoading] = useState(false);
+  const [venueMsg, setVenueMsg]     = useState(null);
 
-  // Show "Об объекте" button when point has a name (venue) or has a direct Yandex org URL
+  const isAdmin = userRole === "ROLE_ADMIN";
+
   const isVenue = !!(point && (point.name || point.yandexOrgUrl));
 
   if (!point) return null;
@@ -1098,6 +1100,13 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
   }
 
   async function handleVenueClick() {
+    setVenueMsg(null);
+
+    if (!isLoggedIn) {
+      setVenueMsg({ type: "not_logged_in" });
+      return;
+    }
+
     setVenueLoading(true);
     try {
       const checkParams = new URLSearchParams({
@@ -1111,6 +1120,12 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
 
       if (checkData && checkData.exists && checkData.id && checkData.id !== "null") {
         window.location.href = `/venues/${checkData.id}`;
+        return;
+      }
+
+      if (!isAdmin) {
+        setVenueMsg({ type: "not_found" });
+        setVenueLoading(false);
         return;
       }
 
@@ -1139,11 +1154,48 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
       if (data && data.id) {
         window.location.href = `/venues/${data.id}`;
       } else {
+        setVenueMsg({ type: "load_failed" });
         setVenueLoading(false);
       }
     } catch (_) {
       setVenueLoading(false);
     }
+  }
+
+  async function handleAdminLoad() {
+    setVenueMsg(null);
+    setVenueLoading(true);
+    try {
+      let data;
+      if (point.yandexOrgUrl) {
+        const params = new URLSearchParams({
+          yandexOrgUrl: point.yandexOrgUrl,
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/info-by-url?${params}`);
+        data = await r.json();
+      } else {
+        const params = new URLSearchParams({
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/info?${params}`);
+        data = await r.json();
+      }
+      if (data && data.id) {
+        window.location.href = `/venues/${data.id}`;
+      } else {
+        setVenueMsg({ type: "load_failed" });
+      }
+    } catch (_) {
+      setVenueMsg({ type: "load_failed" });
+    }
+    setVenueLoading(false);
   }
 
   return (
@@ -1181,7 +1233,7 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
           {isLoggedIn && (
             <button className="btn smallbtn"
               style={{ marginTop: 0, background: "rgba(251,191,36,0.15)", borderColor: "rgba(251,191,36,0.35)", color: "#fbbf24" }}
-              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); }}>
+              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); setVenueMsg(null); }}>
               ⭐ В избранное
             </button>
           )}
@@ -1218,6 +1270,35 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
             </button>
           )}
         </div>
+      )}
+
+      {/* Venue message block */}
+      {venueMsg && (
+        <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 10, fontSize: 13,
+          background: venueMsg.type === "not_found" ? "rgba(251,191,36,0.07)" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.05)" : "rgba(248,113,113,0.07)",
+          border: `1px solid ${venueMsg.type === "not_found" ? "rgba(251,191,36,0.2)" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.1)" : "rgba(248,113,113,0.2)"}`,
+          color: venueMsg.type === "not_found" ? "#fbbf24" : venueMsg.type === "not_logged_in" ? "rgba(255,255,255,0.7)" : "#f87171"
+        }}>
+          {venueMsg.type === "not_found" && (
+            <>🏗️ Объект пока не добавлен на сайт. Ожидайте.</>
+          )}
+          {venueMsg.type === "not_logged_in" && (
+            <><a href="/login" style={{ color: "#60a5fa", textDecoration: "underline" }}>Войдите</a>, чтобы просмотреть объект.</>
+          )}
+          {venueMsg.type === "load_failed" && (
+            <>
+              Не удалось загрузить объект.{" "}
+              <button onClick={handleAdminLoad} style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 13, textDecoration: "underline", padding: 0 }}>
+                Попробовать снова
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Admin: propose to load when not found */}
+      {!venueMsg && isAdmin && isVenue && !venueLoading && (
+        null
       )}
 
       {/* Add-to-favourites inline form */}
@@ -1257,6 +1338,7 @@ function MapPage() {
   const [dropdownOpen, setDropdownOpen]     = useState(false);
   const [clickedPoint, setClickedPoint]     = useState(null);
   const [isLoggedIn, setIsLoggedIn]         = useState(false);
+  const [userRole, setUserRole]             = useState(null);
 
   const [routeTarget, setRouteTarget] = useState(() => {
     try {
@@ -1289,8 +1371,12 @@ function MapPage() {
   useEffect(() => {
     fetch("/api/auth/account", { credentials: "same-origin" })
       .then(r => r.ok ? r.json() : null)
-      .then(data => setIsLoggedIn(!!data))
-      .catch(() => setIsLoggedIn(false));
+      .then(data => {
+        setIsLoggedIn(!!data);
+        if (data && data.role && data.role.name) setUserRole(data.role.name);
+        else setUserRole(null);
+      })
+      .catch(() => { setIsLoggedIn(false); setUserRole(null); });
   }, []);
 
   useEffect(() => {
@@ -1622,6 +1708,9 @@ function MapPage() {
           </div>
         </div>
         <div className="topbar-right">
+          {userRole === "ROLE_ADMIN" && (
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 7px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
+          )}
           <a className="btn smallbtn secondary" href="/">← На главную</a>
         </div>
       </header>
@@ -1704,6 +1793,7 @@ function MapPage() {
               onSaved={handlePopupSaved}
               onRoute={(point) => setRouteTarget(point)}
               isLoggedIn={isLoggedIn}
+              userRole={userRole}
             />
           </div>
 

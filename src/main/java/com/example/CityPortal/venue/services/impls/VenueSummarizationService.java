@@ -58,14 +58,14 @@ public class VenueSummarizationService {
     private static final List<String> GROQ_MODELS = List.of(
         "llama-3.1-8b-instant",
         "llama-3.3-70b-versatile",
-        "llama-3.1-70b-versatile",
-        "llama3-groq-8b-8192-tool-use-preview"
+        "llama3-70b-8192",
+        "compound-beta-mini",
+        "gemma2-9b-it",
+        "llama-3.1-70b-versatile"
     );
 
     private static final int MAX_RETRIES_429 = 3;
     private static final long RETRY_DELAY_MS  = 8_000;
-
-    // Меньше отзывов в чанке = меньше токенов = меньше шансов словить rate limit
     private static final int CHUNK_SIZE = 15;
 
     @Transactional
@@ -145,10 +145,6 @@ public class VenueSummarizationService {
             .orElse(null);
     }
 
-    /**
-     * Принудительно запускает суммаризацию всех отзывов заведения,
-     * игнорируя previousLastReviewId (сбрасывает, чтобы обработать заново).
-     */
     @Transactional
     public String forceSummarize(Venue venue, List<VenueReview> allReviews) {
         if (allReviews == null || allReviews.isEmpty()) {
@@ -267,7 +263,7 @@ public class VenueSummarizationService {
                 Map<String, Object> requestBody = Map.of(
                     "model", model,
                     "messages", List.of(Map.of("role", "user", "content", prompt)),
-                    "max_tokens", 512
+                    "max_tokens", 1024
                 );
 
                 String responseStr = openrouterClient.post()
@@ -281,7 +277,6 @@ public class VenueSummarizationService {
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
                         (req, resp) -> {
-                            // не бросаем исключение — читаем тело ниже
                         })
                     .body(String.class);
 
@@ -290,9 +285,14 @@ public class VenueSummarizationService {
                     break;
                 }
 
-                JsonNode root = objectMapper.readTree(responseStr);
+                JsonNode root;
+                try {
+                    root = objectMapper.readTree(responseStr);
+                } catch (Exception parseEx) {
+                    log.warn("OpenRouter модель {} — невалидный JSON ответ, пропускаем", model);
+                    break;
+                }
 
-                // OpenRouter иногда возвращает {"error": {...}} с HTTP 200 или 4xx
                 if (root.has("error")) {
                     String errMsg = root.path("error").path("message").asText("");
                     int errStatus = root.path("error").path("code").asInt(0);
@@ -353,7 +353,7 @@ public class VenueSummarizationService {
                 Map<String, Object> requestBody = Map.of(
                     "model", model,
                     "messages", List.of(Map.of("role", "user", "content", prompt)),
-                    "max_tokens", 512
+                    "max_tokens", 1024
                 );
 
                 String responseStr = groqClient.post()
@@ -365,7 +365,6 @@ public class VenueSummarizationService {
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
                         (req, resp) -> {
-                            // не бросаем исключение — читаем тело ниже
                         })
                     .body(String.class);
 
@@ -374,9 +373,15 @@ public class VenueSummarizationService {
                     break;
                 }
 
-                JsonNode root = objectMapper.readTree(responseStr);
+                JsonNode root;
+                try {
+                    root = objectMapper.readTree(responseStr);
+                }
+                catch (Exception parseEx) {
+                    log.warn("Groq модель {} — невалидный JSON ответ (усечён?), пробуем следующую...", model);
+                    break;
+                }
 
-                // Groq может вернуть {"error": {...}} с HTTP 200 или 4xx
                 if (root.has("error")) {
                     String errMsg = root.path("error").path("message").asText("");
                     String errCode = root.path("error").path("code").asText("");
@@ -389,7 +394,8 @@ public class VenueSummarizationService {
                     }
                     if (decommissioned) {
                         log.warn("Groq модель {} устарела (decommissioned), пробуем следующую...", model);
-                    } else {
+                    }
+                    else {
                         log.warn("Groq модель {} вернула ошибку: {}", model, errMsg);
                     }
                     break;

@@ -1,4 +1,4 @@
-const { useEffect, useState, useRef, useCallback } = React;
+﻿const { useEffect, useState, useRef, useCallback } = React;
 
 function MiniMapPicker({ onPick, initialAddress, mapId }) {
   const domId = mapId || "profile-minimap";
@@ -755,6 +755,9 @@ function ProfilePage() {
         </div>
 
         <div className="topbar-right">
+          {account && account.role && account.role.name === "ROLE_ADMIN" && (
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 7px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
+          )}
           <a className="btn smallbtn secondary" href="/">Главная</a>
           <button className="btn smallbtn secondary" onClick={logout}>Выйти</button>
         </div>
@@ -797,8 +800,11 @@ function ProfilePage() {
                 <div className="list-item">
                   <div>
                     <b>Роль</b>
-                    <div className="small muted">
-                      {account.role?.name ? account.role.name : "(не загружено)"}
+                    <div style={{ marginTop: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                      <span className="small muted">{account.role?.name ? account.role.name : "(не загружено)"}</span>
+                      {account.role?.name === "ROLE_ADMIN" && (
+                        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 8px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
+                      )}
                     </div>
                   </div>
                 </div>
