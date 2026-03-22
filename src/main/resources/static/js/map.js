@@ -796,11 +796,276 @@ function SavedMessage({ onDone }) {
   );
 }
 
+function StarRating({ rating }) {
+  const num = parseFloat(rating);
+  if (!rating || isNaN(num)) return null;
+  const full = Math.round(num);
+  return (
+    <span style={{ color: "#fbbf24", fontSize: 14, letterSpacing: 1 }}>
+      {"★".repeat(Math.min(full, 5))}{"☆".repeat(Math.max(0, 5 - full))}
+      <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginLeft: 5 }}>{rating}</span>
+    </span>
+  );
+}
+
+function VenueInfoPanel({ point, onClose }) {
+  const [status, setStatus] = useState("idle"); // idle | loading | ok | error
+  const [venueData, setVenueData] = useState(null);
+  const [showReviews, setShowReviews] = useState(false);
+
+  useEffect(() => {
+    if (!point) return;
+    setStatus("loading");
+    setVenueData(null);
+    setShowReviews(false);
+
+    if (point.yandexOrgUrl) {
+      // Прямая ссылка на организацию из плашки Яндекса — самый точный способ
+      const params = new URLSearchParams({
+        yandexOrgUrl: point.yandexOrgUrl,
+        name: point.name || point.address,
+        address: point.address || "",
+        lat: point.lat,
+        lon: point.lon
+      });
+      fetch(`/api/venue/info-by-url?${params}`)
+        .then(r => r.json())
+        .then(data => {
+          setVenueData(data);
+          setStatus(data.status === "error" ? "error" : "ok");
+        })
+        .catch(() => setStatus("error"));
+    } else {
+      // Fallback — поиск по названию и адресу
+      const params = new URLSearchParams({
+        name: point.name || point.address,
+        address: point.address || "",
+        lat: point.lat,
+        lon: point.lon
+      });
+      fetch(`/api/venue/info?${params}`)
+        .then(r => r.json())
+        .then(data => {
+          setVenueData(data);
+          setStatus(data.status === "error" ? "error" : "ok");
+        })
+        .catch(() => setStatus("error"));
+    }
+  }, [point]);
+
+  async function handleRefresh() {
+    setStatus("loading");
+    try {
+      let data;
+      if (point.yandexOrgUrl) {
+        const params = new URLSearchParams({
+          yandexOrgUrl: point.yandexOrgUrl,
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/refresh-by-url?${params}`, { method: "POST" });
+        data = await r.json();
+      } else {
+        const params = new URLSearchParams({
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/refresh?${params}`, { method: "POST" });
+        data = await r.json();
+      }
+      setVenueData(data);
+      setStatus(data.status === "error" ? "error" : "ok");
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  const panelStyle = {
+    borderTop: "1px solid rgba(255,255,255,0.1)",
+    paddingTop: 12,
+    marginTop: 12,
+  };
+
+  const rowStyle = { display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 };
+  const labelStyle = { fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, minWidth: 70, paddingTop: 1 };
+  const valueStyle = { fontSize: 13, color: "rgba(255,255,255,0.85)", flex: 1, lineHeight: 1.5 };
+
+  return (
+    <div style={panelStyle}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5 }}>
+          🏢 ОБ ОБЪЕКТЕ
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {status === "ok" && (
+            <button onClick={handleRefresh} title="Обновить данные"
+              style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", fontSize: 14, padding: 0 }}>
+              ↻
+            </button>
+          )}
+          <button onClick={onClose}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 18, padding: 0, lineHeight: 1 }}>
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Loading */}
+      {status === "loading" && (
+        <div style={{ textAlign: "center", padding: "16px 0", color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
+          <div style={{ marginBottom: 8, fontSize: 20 }}>⏳</div>
+          {point?.yandexOrgUrl
+            ? <>Открываем страницу организации на Яндекс Картах…<br/><span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Парсинг по прямой ссылке — без поиска</span></>
+            : <>Ищем информацию на Яндекс Картах…<br/><span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Это может занять 10–20 секунд</span></>
+          }
+        </div>
+      )}
+
+      {/* Error */}
+      {status === "error" && (
+        <div style={{ color: "#f87171", fontSize: 13, textAlign: "center", padding: "10px 0" }}>
+          Не удалось получить данные.
+          <button onClick={handleRefresh}
+            style={{ marginLeft: 8, background: "none", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 13, textDecoration: "underline" }}>
+            Попробовать снова
+          </button>
+        </div>
+      )}
+
+      {/* Data */}
+      {status === "ok" && venueData && (
+        <>
+          {venueData.name && (
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, lineHeight: 1.3 }}>{venueData.name}</div>
+          )}
+
+          {venueData.rating && (
+            <div style={{ ...rowStyle, marginBottom: 10 }}>
+              <StarRating rating={venueData.rating} />
+            </div>
+          )}
+
+          {venueData.category && (
+            <div style={rowStyle}>
+              <span style={labelStyle}>Тип</span>
+              <span style={valueStyle}>{venueData.category}</span>
+            </div>
+          )}
+
+          {venueData.address && (
+            <div style={rowStyle}>
+              <span style={labelStyle}>📍 Адрес</span>
+              <span style={valueStyle}>{venueData.address}</span>
+            </div>
+          )}
+
+          {venueData.phone && (
+            <div style={rowStyle}>
+              <span style={labelStyle}>📞 Телефон</span>
+              <a href={`tel:${venueData.phone}`} style={{ ...valueStyle, color: "#60a5fa", textDecoration: "none" }}>
+                {venueData.phone}
+              </a>
+            </div>
+          )}
+
+
+          {venueData.description && (
+            <div style={{ ...rowStyle, flexDirection: "column" }}>
+              <span style={{ ...labelStyle, marginBottom: 4 }}>📝 Описание</span>
+              <span style={{ ...valueStyle, color: "rgba(255,255,255,0.65)", fontSize: 12, lineHeight: 1.6 }}>{venueData.description}</span>
+            </div>
+          )}
+
+          {/* AI Summary */}
+          {venueData.reviewsSummary && (
+            <div style={{
+              marginTop: 12, padding: "12px 14px",
+              background: "rgba(96,165,250,0.08)",
+              border: "1px solid rgba(96,165,250,0.2)",
+              borderRadius: 10
+            }}>
+              <div style={{ fontSize: 11, color: "#60a5fa", fontWeight: 600, marginBottom: 6, letterSpacing: 0.5 }}>
+                🤖 РЕЗЮМЕ ОТЗЫВОВ (AI)
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.6 }}>
+                {venueData.reviewsSummary}
+              </div>
+            </div>
+          )}
+
+          {/* Reviews */}
+          {venueData.reviews && venueData.reviews.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={() => setShowReviews(v => !v)}
+                style={{
+                  background: "none", border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 8, padding: "7px 12px", cursor: "pointer",
+                  color: "rgba(255,255,255,0.6)", fontSize: 12, width: "100%", textAlign: "left",
+                  display: "flex", justifyContent: "space-between", alignItems: "center"
+                }}>
+                <span>💬 Отзывы ({venueData.reviews.length})</span>
+                <span style={{ fontSize: 10 }}>{showReviews ? "▲" : "▼"}</span>
+              </button>
+
+              {showReviews && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+                  {venueData.reviews.map((r, i) => (
+                    <div key={i} style={{
+                      padding: "10px 12px",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
+                          {r.author || "Аноним"}
+                        </span>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                          {r.rating && <StarRating rating={r.rating} />}
+                          {r.reviewDate && (
+                            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{r.reviewDate}</span>
+                          )}
+                        </div>
+                      </div>
+                      {r.text && (
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.6 }}>{r.text}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {venueData.yandexUrl && (
+            <div style={{ marginTop: 10, textAlign: "right" }}>
+              <a href={venueData.yandexUrl} target="_blank" rel="noreferrer"
+                style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textDecoration: "none" }}>
+                Открыть на Яндекс Картах ↗
+              </a>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
-  const [phase, setPhase]     = useState("idle");
-  const [label, setLabel]     = useState("");
-  const [addMode, setAddMode] = useState(false);
-  const [errMsg, setErrMsg]   = useState("");
+  const [phase, setPhase]           = useState("idle");
+  const [label, setLabel]           = useState("");
+  const [addMode, setAddMode]       = useState(false);
+  const [errMsg, setErrMsg]         = useState("");
+  const [venueLoading, setVenueLoading] = useState(false);
+
+  // Show "Об объекте" button when point has a name (venue) or has a direct Yandex org URL
+  const isVenue = !!(point && (point.name || point.yandexOrgUrl));
 
   if (!point) return null;
 
@@ -832,10 +1097,60 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
     }
   }
 
+  async function handleVenueClick() {
+    setVenueLoading(true);
+    try {
+      const checkParams = new URLSearchParams({
+        lat: point.lat,
+        lon: point.lon,
+        name: point.name || point.address || "",
+        address: point.address || ""
+      });
+      const checkResp = await fetch(`/api/venue/check?${checkParams}`);
+      const checkData = await checkResp.json();
+
+      if (checkData && checkData.exists && checkData.id && checkData.id !== "null") {
+        window.location.href = `/venues/${checkData.id}`;
+        return;
+      }
+
+      let data;
+      if (point.yandexOrgUrl) {
+        const params = new URLSearchParams({
+          yandexOrgUrl: point.yandexOrgUrl,
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/info-by-url?${params}`);
+        data = await r.json();
+      } else {
+        const params = new URLSearchParams({
+          name: point.name || point.address,
+          address: point.address || "",
+          lat: point.lat,
+          lon: point.lon
+        });
+        const r = await fetch(`/api/venue/info?${params}`);
+        data = await r.json();
+      }
+
+      if (data && data.id) {
+        window.location.href = `/venues/${data.id}`;
+      } else {
+        setVenueLoading(false);
+      }
+    } catch (_) {
+      setVenueLoading(false);
+    }
+  }
+
   return (
     <div style={{
       position: "absolute", bottom: 24, left: 8,
-      zIndex: 500, minWidth: 260, maxWidth: 320,
+      zIndex: 500, minWidth: 260, maxWidth: 340,
+      maxHeight: "80vh", overflowY: "auto",
       background: "rgba(15,17,30,0.97)", border: "1px solid rgba(255,255,255,0.13)",
       borderRadius: 16, padding: "16px 18px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       backdropFilter: "blur(12px)"
@@ -860,57 +1175,56 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
         }}>✕</button>
       </div>
 
-      {/* Action buttons — shown when not in any mode and not yet saved */}
+      {/* Action buttons */}
       {!addMode && phase !== "saved" && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {isLoggedIn && (
-            <button
-              className="btn smallbtn"
+            <button className="btn smallbtn"
               style={{ marginTop: 0, background: "rgba(251,191,36,0.15)", borderColor: "rgba(251,191,36,0.35)", color: "#fbbf24" }}
-              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); }}
-            >
+              onClick={() => { setAddMode(true); setPhase("idle"); setErrMsg(""); setLabel(""); }}>
               ⭐ В избранное
             </button>
           )}
           {!isLoggedIn && (
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 6 }}>
               <span>⭐</span>
-              <span>
-                <a href="/login" style={{ color: "#fbbf24", textDecoration: "underline" }}>Войдите</a>, чтобы добавить в избранное
-              </span>
+              <span><a href="/login" style={{ color: "#fbbf24", textDecoration: "underline" }}>Войдите</a>, чтобы добавить в избранное</span>
             </div>
           )}
-          <button
-            className="btn smallbtn secondary"
-            style={{ marginTop: 0 }}
-            onClick={() => onRoute && onRoute(point)}
-          >
+          <button className="btn smallbtn secondary" style={{ marginTop: 0 }}
+            onClick={() => onRoute && onRoute(point)}>
             🗺️ Как добраться
           </button>
-          <button
-            className="btn smallbtn"
+          <button className="btn smallbtn"
             style={{ marginTop: 0, background: "rgba(252,200,0,0.15)", borderColor: "rgba(252,200,0,0.35)", color: "#fcd34d" }}
             onClick={() => {
               const params = new URLSearchParams({ toAddress: point.address, toLat: point.lat, toLon: point.lon });
               window.location.href = `/taxi?${params.toString()}`;
-            }}
-          >
+            }}>
             🚕 Заказать такси
           </button>
+          {isVenue && (
+            <button className="btn smallbtn"
+              style={{
+                marginTop: 0, fontWeight: 700,
+                background: "rgba(96,165,250,0.12)",
+                borderColor: "rgba(96,165,250,0.35)",
+                color: "#60a5fa",
+                opacity: venueLoading ? 0.6 : 1
+              }}
+              disabled={venueLoading}
+              onClick={handleVenueClick}>
+              {venueLoading ? "⏳ Загружаем…" : "🏢 Об объекте"}
+            </button>
+          )}
         </div>
       )}
 
       {/* Add-to-favourites inline form */}
       {addMode === true && phase !== "saved" && (
         <form onSubmit={handleSave} style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 8 }}>
-          <input
-            className="input"
-            value={label}
-            onChange={e => setLabel(e.target.value)}
-            placeholder="Название (Дом, Работа…)"
-            autoFocus
-            style={{ padding: "8px 12px", fontSize: 13 }}
-          />
+          <input className="input" value={label} onChange={e => setLabel(e.target.value)}
+            placeholder="Название (Дом, Работа…)" autoFocus style={{ padding: "8px 12px", fontSize: 13 }} />
           {phase === "error" && <div style={{ fontSize: 12, color: "#f87171" }}>{errMsg}</div>}
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn smallbtn" type="submit" style={{ marginTop: 0 }} disabled={phase === "saving"}>
@@ -924,7 +1238,7 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn }) {
         </form>
       )}
 
-      {/* Success message — auto-disappears after 2s */}
+      {/* Success message */}
       {phase === "saved" && (
         <SavedMessage onDone={() => { setPhase("idle"); setAddMode(false); }} />
       )}
@@ -1035,7 +1349,7 @@ function MapPage() {
     }
   }, []);
 
-  function placeClickMarker(lat, lon, name) {
+  function placeClickMarker(lat, lon, name, yandexOrgUrl) {
     window.ymaps.geocode([lat, lon], { results: 1 }).then(res => {
       const geoObj = res.geoObjects.get(0);
 
@@ -1076,7 +1390,7 @@ function MapPage() {
         { preset: "islands#blueDotIcon" }
       );
       mapRef.current.geoObjects.add(clickMarkerRef.current);
-      setClickedPoint({ lat, lon, address, name: finalName });
+      setClickedPoint({ lat, lon, address, name: finalName, yandexOrgUrl: yandexOrgUrl || null });
     });
   }
 
@@ -1100,23 +1414,75 @@ function MapPage() {
     });
 
     mapRef.current.balloon.events.add("open", () => {
-      try {
-        if (!lastCoords) return;
-        const [lat, lon] = lastCoords;
+      if (!lastCoords) return;
+      const [lat, lon] = lastCoords;
 
+      function extractBalloonData() {
         let name = null;
+        let yandexOrgUrl = null;
         const balloonEl = document.querySelector("[class*='balloon__content']");
-        if (balloonEl) {
-          const heading = balloonEl.querySelector("h1, h2, h3, b, strong, [class*='title'], [class*='name']");
-          if (heading) name = heading.textContent.trim() || null;
-          if (!name) {
-            const first = balloonEl.textContent.trim().split(/[\n\r]+/)[0].trim();
-            if (first.length > 1 && first.length < 120) name = first;
-          }
+        if (!balloonEl) return { name, yandexOrgUrl };
+
+        const heading = balloonEl.querySelector("h1, h2, h3, b, strong, [class*='title'], [class*='name']");
+        if (heading) name = heading.textContent.trim() || null;
+        if (!name) {
+          const first = balloonEl.textContent.trim().split(/[\n\r]+/)[0].trim();
+          if (first.length > 1 && first.length < 120) name = first;
         }
 
-        placeClickMarker(lat, lon, name);
+        const links = balloonEl.querySelectorAll("a[href]");
+        for (const link of links) {
+          const href = link.getAttribute("href") || "";
+          const text = link.textContent.trim().toLowerCase();
+          if ((href.includes("yandex.ru/maps") || href.startsWith("/maps")) &&
+              (href.includes("/org/") || href.includes("orgpage"))) {
+            yandexOrgUrl = href.startsWith("/") ? "https://yandex.ru" + href : href;
+            break;
+          }
+
+          if (text.includes("об организации") || text.includes("подробнее") || text.includes("организация")) {
+            if (href.startsWith("http") || href.startsWith("/")) {
+              yandexOrgUrl = href.startsWith("/") ? "https://yandex.ru" + href : href;
+              break;
+            }
+          }
+        }
+        return { name, yandexOrgUrl };
+      }
+
+      try {
+        const { name, yandexOrgUrl } = extractBalloonData();
+        if (yandexOrgUrl) {
+          placeClickMarker(lat, lon, name, yandexOrgUrl);
+          return;
+        }
       } catch (_) {}
+
+      let resolved = false;
+      const observer = new MutationObserver(() => {
+        if (resolved) return;
+        try {
+          const { name, yandexOrgUrl } = extractBalloonData();
+          if (yandexOrgUrl) {
+            resolved = true;
+            observer.disconnect();
+            placeClickMarker(lat, lon, name, yandexOrgUrl);
+          }
+        } catch (_) {}
+      });
+      const balloonRoot = document.querySelector("[class*='balloon']") || document.body;
+      observer.observe(balloonRoot, { childList: true, subtree: true });
+
+      setTimeout(() => {
+        if (resolved) return;
+        observer.disconnect();
+        try {
+          const { name, yandexOrgUrl } = extractBalloonData();
+          placeClickMarker(lat, lon, name, yandexOrgUrl);
+        } catch (_) {
+          placeClickMarker(lat, lon, null, null);
+        }
+      }, 800);
     });
 
   }, [mapReady]);

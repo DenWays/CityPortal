@@ -51,6 +51,7 @@ public class WebSecurityConfig {
                                 "/weather", "/weather.html",
                                 "/map", "/map.html",
                                 "/api/maps/**",
+                                "/api/venue/**",
                                 "/traffic", "/traffic.html",
                                 "/api/traffic/**",
                                 "/taxi", "/taxi.html",
@@ -60,7 +61,8 @@ public class WebSecurityConfig {
                                 "/afisha", "/afisha/**", "/afisha.html",
                                 "/api/afisha/**",
                                 "/routes", "/routes.html",
-                                "/api/routes/**"
+                                "/api/routes/**",
+                                "/venues", "/venues/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/account").authenticated()

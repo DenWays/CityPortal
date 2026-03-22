@@ -830,6 +830,10 @@ function CityTabs() {
   const [routesLoading, setRoutesLoading] = useState(false);
   const [routesError, setRoutesError] = useState(null);
 
+  const [venues, setVenues] = useState([]);
+  const [venuesLoading, setVenuesLoading] = useState(false);
+  const [venuesError, setVenuesError] = useState(null);
+
   const switchTab = (id) => {
     if (id === activeTab) return;
     setVisible(false);
@@ -865,6 +869,18 @@ function CityTabs() {
       .catch(e => setRoutesError(e.message))
       .finally(() => setRoutesLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== "places") return;
+    if (venues.length > 0) return;
+    setVenuesLoading(true);
+    setVenuesError(null);
+    fetch("/api/venue/list?page=0&size=5")
+      .then(r => { if (!r.ok) throw new Error("Ошибка загрузки заведений"); return r.json(); })
+      .then(data => setVenues(data.content || []))
+      .catch(e => setVenuesError(e.message))
+      .finally(() => setVenuesLoading(false));
+  }, [activeTab]);
 
   const tabs = [
     { id: "news",   label: "📰 Новости" },
@@ -990,27 +1006,47 @@ function CityTabs() {
         )}
 
         {activeTab === "places" && (
-          <div className="list">
-            <div className="list-item">
-              <div>
-                <b>Кофейня "Город"</b>
-                <div className="small muted">Рейтинг: 4.6 • 128 отзывов</div>
+          <div>
+            {venuesLoading && <div className="small muted" style={{padding:"12px 0"}}>Загрузка заведений...</div>}
+            {venuesError && <div className="small" style={{color:"var(--danger)",padding:"12px 0"}}>{venuesError}</div>}
+            {!venuesLoading && !venuesError && venues.length === 0 && (
+              <div className="small muted" style={{padding:"12px 0"}}>
+                Заведений пока нет. Нажмите на объект на карте → «Об объекте», чтобы добавить.
               </div>
-              <button className="btn smallbtn secondary">Открыть</button>
-            </div>
-            <div className="list-item">
-              <div>
-                <b>Фитнес "Pulse"</b>
-                <div className="small muted">Рейтинг: 4.3 • 54 отзыва</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
-            </div>
-            <div className="list-item">
-              <div>
-                <b>Кинотеатр "Central"</b>
-                <div className="small muted">Рейтинг: 4.7 • 302 отзыва</div>
-              </div>
-              <button className="btn smallbtn secondary">Открыть</button>
+            )}
+            {venues.map(item => (
+              <a key={item.id} href={`/venues/${item.id}`} style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 4px",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                textDecoration: "none", color: "inherit",
+                borderRadius: 8, transition: "background 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <div style={{
+                  width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+                  background: "rgba(96,165,250,0.10)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem"
+                }}>🏢</div>
+                <div style={{flex: 1, minWidth: 0}}>
+                  <div style={{fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+                    overflow: "hidden", display: "-webkit-box",
+                    WebkitLineClamp: 1, WebkitBoxOrient: "vertical"
+                  }}>{item.name}</div>
+                  <div style={{display:"flex", gap:8, marginTop:3, alignItems:"center", flexWrap:"wrap"}}>
+                    {item.rating && (
+                      <span style={{color:"#fbbf24", fontSize:11}}>{"★".repeat(Math.min(Math.round(parseFloat(item.rating)), 5))} {item.rating}</span>
+                    )}
+                    {item.category && <span className="small muted">{item.category}</span>}
+                    {item.address && <span className="small muted" style={{fontSize:11}}>📍 {item.address}</span>}
+                  </div>
+                </div>
+              </a>
+            ))}
+            <div style={{marginTop:10, textAlign:"right"}}>
+              <a className="btn smallbtn secondary" href="/venues">Все заведения →</a>
             </div>
           </div>
         )}
