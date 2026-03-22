@@ -196,6 +196,16 @@ public class VenueServiceImpl implements VenueService {
     }
 
     @Override
+    @Transactional
+    public String triggerSummarization(Long venueId) {
+        Venue venue = venueRepository.findById(venueId)
+            .orElseThrow(() -> new RuntimeException("Venue not found: " + venueId));
+        List<VenueReview> reviews = venueReviewRepository.findByVenueId(venueId);
+        log.info("Ручной запуск суммаризации для venue id={}, отзывов={}", venueId, reviews.size());
+        return summarizationService.forceSummarize(venue, reviews);
+    }
+
+    @Override
     public Page<VenueInfoDto> listAll(Pageable pageable) {
         return venueRepository.findAll(pageable).map(v -> {
             String summary = summarizationService.getLatestSummary(v.getId());

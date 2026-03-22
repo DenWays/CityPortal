@@ -11,4 +11,5 @@ public interface VenueService {
     VenueInfoDto getVenueInfoByUrl(String yandexOrgUrl, String name, String address, Double lat, Double lon, boolean forceRefresh);
     VenueInfoDto getById(Long id);
     Page<VenueInfoDto> listAll(Pageable pageable);
+    String triggerSummarization(Long venueId);
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,12 +57,16 @@ public class VenueSummarizationService {
 
     private static final List<String> GROQ_MODELS = List.of(
         "llama-3.1-8b-instant",
-        "llama3-8b-8192",
-        "gemma2-9b-it",
-        "mixtral-8x7b-32768"
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama3-groq-8b-8192-tool-use-preview"
     );
 
-    private static final int CHUNK_SIZE = 50;
+    private static final int MAX_RETRIES_429 = 3;
+    private static final long RETRY_DELAY_MS  = 8_000;
+
+    // Меньше отзывов в чанке = меньше токенов = меньше шансов словить rate limit
+    private static final int CHUNK_SIZE = 15;
 
     @Transactional
     public String summarizeAndSave(Venue venue, List<VenueReview> allReviews) {
@@ -140,6 +145,55 @@ public class VenueSummarizationService {
             .orElse(null);
     }
 
+    /**
+     * Принудительно запускает суммаризацию всех отзывов заведения,
+     * игнорируя previousLastReviewId (сбрасывает, чтобы обработать заново).
+     */
+    @Transactional
+    public String forceSummarize(Venue venue, List<VenueReview> allReviews) {
+        if (allReviews == null || allReviews.isEmpty()) {
+            log.warn("Нет отзывов для принудительной суммаризации (venue id={})", venue.getId());
+            return getLatestSummary(venue.getId());
+        }
+        if ((openrouterApiKey == null || openrouterApiKey.isBlank()) &&
+            (groqApiKey == null || groqApiKey.isBlank())) {
+            log.warn("Ни один API ключ не настроен, принудительная суммаризация недоступна");
+            return getLatestSummary(venue.getId());
+        }
+
+        List<VenueReview> reviews = allReviews.stream()
+            .filter(r -> r.getText() != null && r.getText().trim().split("\\s+").length >= 5)
+            .distinct()
+            .toList();
+
+        if (reviews.isEmpty()) {
+            log.warn("После фильтрации нет подходящих отзывов (venue id={})", venue.getId());
+            return getLatestSummary(venue.getId());
+        }
+
+        log.info("Принудительная суммаризация {} отзывов для venue id={}", reviews.size(), venue.getId());
+
+        List<String> texts = reviews.stream().map(VenueReview::getText).toList();
+        String summary = summarizeChunks(texts);
+        if (summary == null) {
+            log.warn("Принудительная суммаризация не удалась (venue id={})", venue.getId());
+            return getLatestSummary(venue.getId());
+        }
+
+        long maxReviewId = reviews.stream().mapToLong(VenueReview::getId).max().orElse(0L);
+
+        VenueSummary round = new VenueSummary();
+        round.setVenue(venue);
+        round.setFinalSummary(summary);
+        round.setReviewsCount(reviews.size());
+        round.setLastReviewId(maxReviewId);
+        round.setCreatedAt(LocalDateTime.now());
+        venueSummaryRepository.save(round);
+
+        log.info("Принудительная суммаризация сохранена (venue id={})", venue.getId());
+        return summary;
+    }
+
     private String summarizeChunks(List<String> texts) {
         List<List<String>> chunks = new ArrayList<>();
         for (int i = 0; i < texts.size(); i += CHUNK_SIZE) {
@@ -208,40 +262,75 @@ public class VenueSummarizationService {
     }
 
     private String callOpenRouterWithModel(String prompt, String model) {
-        try {
-            Map<String, Object> requestBody = Map.of(
-                "model", model,
-                "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "max_tokens", 512
-            );
+        for (int attempt = 1; attempt <= MAX_RETRIES_429; attempt++) {
+            try {
+                Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(Map.of("role", "user", "content", prompt)),
+                    "max_tokens", 512
+                );
 
-            String responseStr = openrouterClient.post()
-                .uri("/api/v1/chat/completions")
-                .header("Authorization", "Bearer " + openrouterApiKey)
-                .header("HTTP-Referer", "https://cityportal.local")
-                .header("X-Title", "CityPortal")
-                .header("Accept", "application/json")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(String.class);
+                String responseStr = openrouterClient.post()
+                    .uri("/api/v1/chat/completions")
+                    .header("Authorization", "Bearer " + openrouterApiKey)
+                    .header("HTTP-Referer", "https://cityportal.local")
+                    .header("X-Title", "CityPortal")
+                    .header("Accept", "application/json")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        (req, resp) -> {
+                            // не бросаем исключение — читаем тело ниже
+                        })
+                    .body(String.class);
 
-            if (responseStr != null) {
+                if (responseStr == null || responseStr.isBlank()) {
+                    log.warn("OpenRouter модель {} вернула пустой ответ", model);
+                    break;
+                }
+
                 JsonNode root = objectMapper.readTree(responseStr);
+
+                // OpenRouter иногда возвращает {"error": {...}} с HTTP 200 или 4xx
+                if (root.has("error")) {
+                    String errMsg = root.path("error").path("message").asText("");
+                    int errStatus = root.path("error").path("code").asInt(0);
+                    boolean rateLimited = errMsg.contains("rate") || errMsg.contains("429") || errStatus == 429;
+                    if (rateLimited && attempt < MAX_RETRIES_429) {
+                        log.warn("OpenRouter модель {} — rate limit в ответе, ждём {}мс (попытка {}/{})", model, RETRY_DELAY_MS, attempt, MAX_RETRIES_429);
+                        sleep(RETRY_DELAY_MS);
+                        continue;
+                    }
+                    log.warn("OpenRouter модель {} вернула ошибку: {}", model, errMsg);
+                    break;
+                }
+
                 JsonNode text = root.path("choices").get(0).path("message").path("content");
                 if (!text.isMissingNode() && !text.asText().isBlank()) {
                     log.info("Суммаризация через OpenRouter модель: {}", model);
                     return text.asText().trim();
                 }
+                log.warn("OpenRouter модель {} — пустой content в ответе", model);
+                break;
             }
-        }
-        catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage() : "";
-            if (msg.contains("429") || msg.contains("404") || msg.contains("rate") || msg.contains("upstream")) {
-                log.warn("OpenRouter модель {} недоступна, пробуем следующую...", model);
-            }
-            else {
-                log.error("Ошибка OpenRouter ({}): {}", model, msg);
+            catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "";
+                boolean is429 = msg.contains("429") || msg.contains("rate");
+                boolean isFatal = msg.contains("404") || msg.contains("upstream");
+
+                if (is429 && attempt < MAX_RETRIES_429) {
+                    log.warn("OpenRouter модель {} — 429, ждём {}мс (попытка {}/{})", model, RETRY_DELAY_MS, attempt, MAX_RETRIES_429);
+                    sleep(RETRY_DELAY_MS);
+                }
+                else if (is429 || isFatal) {
+                    log.warn("OpenRouter модель {} недоступна, пробуем следующую...", model);
+                    break;
+                }
+                else {
+                    log.error("Ошибка OpenRouter ({}): {}", model, msg);
+                    break;
+                }
             }
         }
         return null;
@@ -259,38 +348,78 @@ public class VenueSummarizationService {
     }
 
     private String callGroqWithModel(String prompt, String model) {
-        try {
-            Map<String, Object> requestBody = Map.of(
-                "model", model,
-                "messages", List.of(Map.of("role", "user", "content", prompt)),
-                "max_tokens", 512
-            );
+        for (int attempt = 1; attempt <= MAX_RETRIES_429; attempt++) {
+            try {
+                Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(Map.of("role", "user", "content", prompt)),
+                    "max_tokens", 512
+                );
 
-            String responseStr = groqClient.post()
-                .uri("/openai/v1/chat/completions")
-                .header("Authorization", "Bearer " + groqApiKey)
-                .header("Accept", "application/json")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(String.class);
+                String responseStr = groqClient.post()
+                    .uri("/openai/v1/chat/completions")
+                    .header("Authorization", "Bearer " + groqApiKey)
+                    .header("Accept", "application/json")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        (req, resp) -> {
+                            // не бросаем исключение — читаем тело ниже
+                        })
+                    .body(String.class);
 
-            if (responseStr != null) {
+                if (responseStr == null || responseStr.isBlank()) {
+                    log.warn("Groq модель {} вернула пустой ответ, пробуем следующую...", model);
+                    break;
+                }
+
                 JsonNode root = objectMapper.readTree(responseStr);
+
+                // Groq может вернуть {"error": {...}} с HTTP 200 или 4xx
+                if (root.has("error")) {
+                    String errMsg = root.path("error").path("message").asText("");
+                    String errCode = root.path("error").path("code").asText("");
+                    boolean decommissioned = errCode.contains("decommissioned") || errMsg.contains("decommissioned");
+                    boolean rateLimited = errMsg.contains("rate") || errMsg.contains("429") || errCode.contains("rate");
+                    if (rateLimited && attempt < MAX_RETRIES_429) {
+                        log.warn("Groq модель {} — rate limit в ответе, ждём {}мс (попытка {}/{})", model, RETRY_DELAY_MS, attempt, MAX_RETRIES_429);
+                        sleep(RETRY_DELAY_MS);
+                        continue;
+                    }
+                    if (decommissioned) {
+                        log.warn("Groq модель {} устарела (decommissioned), пробуем следующую...", model);
+                    } else {
+                        log.warn("Groq модель {} вернула ошибку: {}", model, errMsg);
+                    }
+                    break;
+                }
+
                 JsonNode text = root.path("choices").get(0).path("message").path("content");
                 if (!text.isMissingNode() && !text.asText().isBlank()) {
                     log.info("Суммаризация через Groq модель: {}", model);
                     return text.asText().trim();
                 }
+                log.warn("Groq модель {} — пустой content в ответе", model);
+                break;
             }
-        }
-        catch (Exception e) {
-            String msg = e.getMessage() != null ? e.getMessage() : "";
-            if (msg.contains("429") || msg.contains("404") || msg.contains("rate")) {
-                log.warn("Groq модель {} недоступна, пробуем следующую...", model);
-            }
-            else {
-                log.error("Ошибка Groq ({}): {}", model, msg);
+            catch (Exception e) {
+                String msg = e.getMessage() != null ? e.getMessage() : "";
+                boolean is429 = msg.contains("429") || msg.contains("rate");
+                boolean isDecommissioned = msg.contains("decommissioned") || msg.contains("model_decommissioned");
+
+                if (is429 && attempt < MAX_RETRIES_429) {
+                    log.warn("Groq модель {} — 429, ждём {}мс (попытка {}/{})", model, RETRY_DELAY_MS, attempt, MAX_RETRIES_429);
+                    sleep(RETRY_DELAY_MS);
+                }
+                else if (is429 || isDecommissioned || msg.contains("404")) {
+                    log.warn("Groq модель {} недоступна, пробуем следующую...", model);
+                    break;
+                }
+                else {
+                    log.error("Ошибка Groq ({}): {}", model, msg);
+                    break;
+                }
             }
         }
         return null;

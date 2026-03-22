@@ -37,6 +37,22 @@ public class VenueController {
         }
     }
 
+    @PostMapping("/{id:[0-9]+}/summarize")
+    public ResponseEntity<Map<String, Object>> summarizeVenue(@PathVariable Long id) {
+        try {
+            String summary = venueService.triggerSummarization(id);
+            if (summary != null) {
+                return ResponseEntity.ok(Map.of("status", "ok", "summary", summary));
+            }
+            else {
+                return ResponseEntity.ok(Map.of("status", "error", "message", "Суммаризация не удалась. Нейросети временно недоступны."));
+            }
+        }
+        catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/check")
     public ResponseEntity<Map<String, Object>> checkVenue(@RequestParam Double lat,
                                                                                                 @RequestParam Double lon,

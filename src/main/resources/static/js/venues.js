@@ -40,6 +40,8 @@ function VenueDetail({ id }) {
   const [error, setError]         = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
+  const [summarizeMsg, setSummarizeMsg] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -67,6 +69,24 @@ function VenueDetail({ id }) {
       setData(d);
     } catch (_) {}
     setRefreshing(false);
+  }
+
+  async function handleSummarize() {
+    setSummarizing(true);
+    setSummarizeMsg(null);
+    try {
+      const r = await fetch(`/api/venue/${id}/summarize`, { method: "POST" });
+      const d = await r.json();
+      if (d.status === "ok") {
+        setData(prev => ({ ...prev, reviewsSummary: d.summary }));
+        setSummarizeMsg({ ok: true, text: "Суммаризация выполнена успешно!" });
+      } else {
+        setSummarizeMsg({ ok: false, text: d.message || "Не удалось выполнить суммаризацию." });
+      }
+    } catch (_) {
+      setSummarizeMsg({ ok: false, text: "Ошибка при запросе суммаризации." });
+    }
+    setSummarizing(false);
   }
 
   const row = { display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 };
@@ -123,8 +143,23 @@ function VenueDetail({ id }) {
                     className="btn smallbtn" style={{ marginTop: 0, background: "rgba(96,165,250,0.12)", borderColor: "rgba(96,165,250,0.3)", color: "#60a5fa" }}>
                     {refreshing ? "⏳ Обновляю..." : "↻ Обновить данные"}
                   </button>
+                  <button onClick={handleSummarize} disabled={summarizing}
+                    className="btn smallbtn" style={{ marginTop: 0, background: "rgba(167,139,250,0.12)", borderColor: "rgba(167,139,250,0.3)", color: "#a78bfa" }}>
+                    {summarizing ? "⏳ Суммаризирую..." : "🤖 Суммаризировать отзывы"}
+                  </button>
                 </div>
               </div>
+
+              {summarizeMsg && (
+                <div style={{
+                  padding: "10px 14px", marginBottom: 12, borderRadius: 10, fontSize: 13,
+                  background: summarizeMsg.ok ? "rgba(52,211,153,0.08)" : "rgba(248,113,113,0.08)",
+                  border: `1px solid ${summarizeMsg.ok ? "rgba(52,211,153,0.25)" : "rgba(248,113,113,0.25)"}`,
+                  color: summarizeMsg.ok ? "#34d399" : "#f87171"
+                }}>
+                  {summarizeMsg.ok ? "✅ " : "⚠️ "}{summarizeMsg.text}
+                </div>
+              )}
 
               {/* Контакты */}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 16, marginBottom: 16 }}>
