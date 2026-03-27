@@ -93,7 +93,13 @@ public class NewsServiceImpl implements NewsService {
 
     private int fetchHtml() {
         int saved = 0;
-        LocalDate stopBefore = LocalDate.now().minusDays(3);
+        LocalDateTime lastParsedAt = newsRepository.findTopByOrderByPublishedAtDesc()
+                .map(News::getPublishedAt)
+                .orElse(null);
+        LocalDateTime stopBefore = lastParsedAt != null
+                ? lastParsedAt
+                : LocalDateTime.now().minusDays(3);
+        log.info("HTML-парсинг: парсим статьи новее {}", stopBefore);
         int pageNum = 1;
         final int MAX_OLD_IN_ROW = 5;
         int oldInRow = 0;
@@ -129,10 +135,10 @@ public class NewsServiceImpl implements NewsService {
                         Element timeEl = card.selectFirst("time[datetime]");
                         if (timeEl != null) {
                             LocalDateTime dt = parseTimeElement(timeEl);
-                            if (dt != null && dt.toLocalDate().isBefore(stopBefore)) {
+                            if (dt != null && !dt.isAfter(stopBefore)) {
                                 oldInRow++;
                                 if (oldInRow >= MAX_OLD_IN_ROW) {
-                                    log.info("{} карточек подряд старше 3 дней — останавливаем", MAX_OLD_IN_ROW);
+                                    log.info("{} карточек подряд не новее {} — останавливаем", MAX_OLD_IN_ROW, stopBefore);
                                     break outer;
                                 }
                                 continue;
@@ -363,40 +369,7 @@ public class NewsServiceImpl implements NewsService {
             publishedAt = parseTimeElement(timeEl);
         }
 
-        String cardImageUrl = null;
-        Element pictureEl = card.selectFirst("picture");
-        if (pictureEl != null) {
-            Elements sources = pictureEl.select("source[srcset]");
-            if (!sources.isEmpty()) {
-                cardImageUrl = lastSrcsetCandidate(sources.last().attr("srcset"));
-            }
-            if (cardImageUrl == null) {
-                Element imgEl = pictureEl.selectFirst("img[srcset]");
-                if (imgEl != null)
-                    cardImageUrl = lastSrcsetCandidate(imgEl.attr("srcset"));
-            }
-            if (cardImageUrl == null) {
-                Element imgEl = pictureEl.selectFirst("img[src]");
-                if (imgEl != null) {
-                    String src = imgEl.attr("src");
-                    if (!src.isBlank())
-                        cardImageUrl = src.startsWith("http") ? src : BASE_URL + src;
-                }
-            }
-        }
-        if (cardImageUrl == null) {
-            Element imgEl = card.selectFirst("img.list__photo-image, .list__photo img, img[src]");
-            if (imgEl != null) {
-                String srcset = imgEl.attr("srcset");
-                if (!srcset.isBlank())
-                    cardImageUrl = lastSrcsetCandidate(srcset);
-                if (cardImageUrl == null) {
-                    String src = imgEl.attr("src");
-                    if (!src.isBlank())
-                        cardImageUrl = src.startsWith("http") ? src : BASE_URL + src;
-                }
-            }
-        }
+        String cardImageUrl = extractCardImageUrl(card);
 
         Document articleDoc = connectWithRetry(href);
 
@@ -412,43 +385,7 @@ public class NewsServiceImpl implements NewsService {
                 description = firstP.text();
         }
 
-        String imageUrl = null;
-        Element detailPicture = articleDoc.selectFirst(".detail__photos picture, .detail__aside picture");
-        if (detailPicture != null) {
-            Elements sources = detailPicture.select("source[srcset]");
-            if (!sources.isEmpty()) {
-                imageUrl = lastSrcsetCandidate(sources.last().attr("srcset"));
-            }
-
-            if (imageUrl == null) {
-                Element detailImg = detailPicture.selectFirst("img[srcset]");
-                if (detailImg != null)
-                    imageUrl = lastSrcsetCandidate(detailImg.attr("srcset"));
-            }
-
-            if (imageUrl == null) {
-                Element detailImg = detailPicture.selectFirst("img[src]");
-                if (detailImg != null) {
-                    String src = detailImg.attr("src");
-                    if (!src.isBlank())
-                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
-                }
-            }
-        }
-
-        if (imageUrl == null) {
-            Element detailImg = articleDoc.selectFirst("img.detail__main-photo");
-            if (detailImg != null) {
-                String srcset = detailImg.attr("srcset");
-                if (!srcset.isBlank())
-                    imageUrl = lastSrcsetCandidate(srcset);
-                if (imageUrl == null) {
-                    String src = detailImg.attr("src");
-                    if (!src.isBlank())
-                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
-                }
-            }
-        }
+        String imageUrl = extractDetailImageUrl(articleDoc);
 
         if (imageUrl == null) {
             imageUrl = cardImageUrl;
@@ -472,6 +409,82 @@ public class NewsServiceImpl implements NewsService {
 
         newsRepository.save(news);
         return 1;
+    }
+
+    private String extractCardImageUrl(Element card) {
+        String imageUrl = null;
+        Element pictureEl = card.selectFirst("picture");
+        if (pictureEl != null) {
+            Elements sources = pictureEl.select("source[srcset]");
+            if (!sources.isEmpty()) {
+                imageUrl = lastSrcsetCandidate(sources.last().attr("srcset"));
+            }
+            if (imageUrl == null) {
+                Element imgEl = pictureEl.selectFirst("img[srcset]");
+                if (imgEl != null)
+                    imageUrl = lastSrcsetCandidate(imgEl.attr("srcset"));
+            }
+            if (imageUrl == null) {
+                Element imgEl = pictureEl.selectFirst("img[src]");
+                if (imgEl != null) {
+                    String src = imgEl.attr("src");
+                    if (!src.isBlank())
+                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
+                }
+            }
+        }
+        if (imageUrl == null) {
+            Element imgEl = card.selectFirst("img.list__photo-image, .list__photo img, img[src]");
+            if (imgEl != null) {
+                String srcset = imgEl.attr("srcset");
+                if (!srcset.isBlank())
+                    imageUrl = lastSrcsetCandidate(srcset);
+                if (imageUrl == null) {
+                    String src = imgEl.attr("src");
+                    if (!src.isBlank())
+                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
+                }
+            }
+        }
+        return imageUrl;
+    }
+
+    private String extractDetailImageUrl(Document articleDoc) {
+        String imageUrl = null;
+        Element detailPicture = articleDoc.selectFirst(".detail__photos picture, .detail__aside picture");
+        if (detailPicture != null) {
+            Elements sources = detailPicture.select("source[srcset]");
+            if (!sources.isEmpty()) {
+                imageUrl = lastSrcsetCandidate(sources.last().attr("srcset"));
+            }
+            if (imageUrl == null) {
+                Element detailImg = detailPicture.selectFirst("img[srcset]");
+                if (detailImg != null)
+                    imageUrl = lastSrcsetCandidate(detailImg.attr("srcset"));
+            }
+            if (imageUrl == null) {
+                Element detailImg = detailPicture.selectFirst("img[src]");
+                if (detailImg != null) {
+                    String src = detailImg.attr("src");
+                    if (!src.isBlank())
+                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
+                }
+            }
+        }
+        if (imageUrl == null) {
+            Element detailImg = articleDoc.selectFirst("img.detail__main-photo");
+            if (detailImg != null) {
+                String srcset = detailImg.attr("srcset");
+                if (!srcset.isBlank())
+                    imageUrl = lastSrcsetCandidate(srcset);
+                if (imageUrl == null) {
+                    String src = detailImg.attr("src");
+                    if (!src.isBlank())
+                        imageUrl = src.startsWith("http") ? src : BASE_URL + src;
+                }
+            }
+        }
+        return imageUrl;
     }
 
     private String lastSrcsetCandidate(String srcset) {

@@ -8,10 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface NewsRepository extends JpaRepository<News, Long> {
     boolean existsBySourceUrl(String sourceUrl);
     Page<News> findAllByOrderByPublishedAtDesc(Pageable pageable);
+    Optional<News> findTopByOrderByPublishedAtDesc();
 
     @Query(value = "SELECT * FROM news n WHERE " +
            "(CAST(:title AS text) IS NULL OR LOWER(n.title) LIKE LOWER(CONCAT('%', CAST(:title AS text), '%'))) AND " +
