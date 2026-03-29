@@ -341,6 +341,22 @@ function VenueDetail({ id }) {
                   <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.7 }}>{data.reviewsSummary}</div>
                 </div>
               )}
+              {(data.reviews && data.reviews.length > 0 || data.rating || data.reviewsSummary) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", marginBottom: 12, background: "rgba(255,180,0,0.06)", border: "1px solid rgba(255,180,0,0.18)", borderRadius: 10 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="12" fill="#FC3F1D"/>
+                    <text x="12" y="16" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold" fontFamily="Arial">Я</text>
+                  </svg>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                    Информация и отзывы получены с&nbsp;
+                    {data.yandexUrl
+                      ? <a href={data.yandexUrl} target="_blank" rel="noreferrer" style={{ color: "#fbbf24", textDecoration: "none" }}>Яндекс Карт ↗</a>
+                      : <span style={{ color: "#fbbf24" }}>Яндекс Карт</span>
+                    }
+                    . CityPortal не является их автором и не несёт ответственности за их содержание.
+                  </span>
+                </div>
+              )}
               {data.reviews && data.reviews.length > 0 && (
                 <div>
                   <button onClick={() => setShowReviews(v => !v)} style={{ width: "100%", textAlign: "left", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -359,6 +375,13 @@ function VenueDetail({ id }) {
                             </div>
                           </div>
                           {r.text && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{r.text}</div>}
+                          <div style={{ marginTop: 6, fontSize: 10, color: "rgba(255,255,255,0.22)" }}>
+                            Источник:{" "}
+                            {data.yandexUrl
+                              ? <a href={data.yandexUrl} target="_blank" rel="noreferrer" style={{ color: "rgba(255,255,255,0.28)", textDecoration: "none" }}>Яндекс Карты</a>
+                              : "Яндекс Карты"
+                            }
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -373,7 +396,15 @@ function VenueDetail({ id }) {
             </div>
           )}
         </section>
-        <footer className="footer" style={{ marginTop: 24 }}><span>© CityPortal</span></footer>
+        <footer className="footer" style={{ marginTop: 24 }}>
+          <span>© CityPortal</span>
+          <span style={{ margin: "0 8px", opacity: 0.3 }}>·</span>
+          <span style={{ fontSize: 11, opacity: 0.45 }}>
+            Данные о заведениях, рейтинги и отзывы получены с{" "}
+            <a href="https://yandex.ru/maps" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline dotted" }}>Яндекс Карт</a>
+            . CityPortal не является их автором.
+          </span>
+        </footer>
       </main>
     </div>
   );
@@ -497,7 +528,15 @@ function VenuesList() {
             </>
           )}
         </section>
-        <footer className="footer" style={{ marginTop: 24 }}><span>© CityPortal</span></footer>
+        <footer className="footer" style={{ marginTop: 24 }}>
+          <span>© CityPortal</span>
+          <span style={{ margin: "0 8px", opacity: 0.3 }}>·</span>
+          <span style={{ fontSize: 11, opacity: 0.45 }}>
+            Данные о заведениях, рейтинги и отзывы получены с{" "}
+            <a href="https://yandex.ru/maps" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline dotted" }}>Яндекс Карт</a>
+            . CityPortal не является их автором.
+          </span>
+        </footer>
       </main>
     </div>
   );
