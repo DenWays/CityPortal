@@ -1,5 +1,78 @@
 const { useEffect, useState, useCallback, useRef } = React;
 
+function VenueMap({ latitude, longitude, name, address }) {
+  const mapContainerRef = useRef(null);
+  const mapRef          = useRef(null);
+  const [mapReady, setMapReady]   = useState(false);
+  const [mapError, setMapError]   = useState(null);
+  const initDone = useRef(false);
+  const domId = useRef("venue-mini-map-" + Math.random().toString(36).slice(2));
+
+  useEffect(() => {
+    if (!latitude || !longitude) return;
+    if (window._ymapsLoaded) {
+      window.ymaps.ready(() => setMapReady(true));
+      return;
+    }
+    fetch("/api/maps/js-key")
+      .then(r => r.ok ? r.text() : Promise.reject("no key"))
+      .then(key => {
+        if (document.querySelector(`script[src*="api-maps.yandex.ru"]`)) {
+          window.ymaps && window.ymaps.ready(() => setMapReady(true));
+          return;
+        }
+        const s = document.createElement("script");
+        s.src = `https://api-maps.yandex.ru/2.1/?apikey=${key}&lang=ru_RU`;
+        s.async = true;
+        s.onload = () => { window._ymapsLoaded = true; window.ymaps.ready(() => setMapReady(true)); };
+        s.onerror = () => setMapError("Не удалось загрузить карту");
+        document.head.appendChild(s);
+      })
+      .catch(() => setMapError("Не удалось получить ключ карты"));
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    if (!mapReady || initDone.current || !mapContainerRef.current) return;
+    initDone.current = true;
+    const lat = parseFloat(latitude);
+    const lon = parseFloat(longitude);
+    const map = new window.ymaps.Map(mapContainerRef.current, {
+      center: [lat, lon],
+      zoom: 16,
+      controls: ["zoomControl"]
+    });
+    mapRef.current = map;
+    const marker = new window.ymaps.Placemark(
+      [lat, lon],
+      { balloonContent: `<b>${name || ""}</b>${address ? "<br/>" + address : ""}`, hintContent: name || "" },
+      { preset: "islands#redIcon" }
+    );
+    map.geoObjects.add(marker);
+    marker.balloon.open();
+  }, [mapReady]);
+
+  if (!latitude || !longitude) return null;
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginBottom: 8, letterSpacing: 0.5 }}>📍 НА КАРТЕ</div>
+      {mapError ? (
+        <div style={{ padding: "12px 14px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>{mapError}</div>
+      ) : (
+        <div style={{ position: "relative", width: "100%", height: 280, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}>
+          {!mapReady && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 13, zIndex: 1 }}>⏳ Загрузка карты...</div>
+          )}
+          <div
+            ref={mapContainerRef}
+            style={{ width: "100%", height: "100%" }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function getVenueId() {
   const m = window.location.pathname.match(/\/venues\/(\d+)/);
   return m ? Number(m[1]) : null;
@@ -252,6 +325,16 @@ function VenueDetail({ id }) {
                 {data.phone && <div style={row}><span style={lbl}>📞 Телефон</span><a href={`tel:${data.phone}`} style={{ ...val, color: "#60a5fa", textDecoration: "none" }}>{data.phone}</a></div>}
                 {data.description && <div style={{ ...row, flexDirection: "column" }}><span style={{ ...lbl, marginBottom: 6 }}>📝 Описание</span><span style={{ ...val, color: "rgba(255,255,255,0.65)", fontSize: 13 }}>{data.description}</span></div>}
               </div>
+
+              {data.latitude && data.longitude && (
+                <VenueMap
+                  latitude={data.latitude}
+                  longitude={data.longitude}
+                  name={data.name}
+                  address={data.address}
+                />
+              )}
+
               {data.reviewsSummary && (
                 <div style={{ padding: "14px 16px", marginBottom: 16, background: "rgba(96,165,250,0.07)", border: "1px solid rgba(96,165,250,0.18)", borderRadius: 12 }}>
                   <div style={{ fontSize: 11, color: "#60a5fa", fontWeight: 700, marginBottom: 8, letterSpacing: 0.5 }}>🤖 РЕЗЮМЕ ОТЗЫВОВ (AI)</div>
