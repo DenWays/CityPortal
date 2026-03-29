@@ -1,4 +1,4 @@
-﻿const { useEffect, useState, useRef, useCallback } = React;
+﻿﻿const { useEffect, useState, useRef, useCallback } = React;
 
 const DEFAULT_CENTER = [51.7727, 55.1039];
 const DEFAULT_ZOOM   = 13;
@@ -660,9 +660,9 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
           </div>
 
           {/* Variant tabs */}
-          {transitRoutes.length > 0 && (
+          {transitRoutes.filter(v => (v.busLines || []).length > 0).length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
-              {transitRoutes.map((variant, vi) => {
+              {transitRoutes.filter(v => (v.busLines || []).length > 0).map((variant, vi) => {
                 const isActive = vi === activeTransitIdx;
                 const variantBuses = variant.busLines || [];
                 const transfers = Math.max(0, variantBuses.length - 1);
@@ -697,24 +697,20 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                       </div>
                     </div>
                     {/* Bus number chips */}
-                    {variantBuses.length > 0 ? (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                        {variantBuses.map((b, bi) => (
-                          <span key={bi} style={{
-                            display: "inline-flex", alignItems: "center", gap: 3,
-                            background: isActive ? "rgba(244,114,182,0.18)" : "rgba(255,255,255,0.07)",
-                            border: `1px solid ${isActive ? "rgba(244,114,182,0.4)" : "rgba(255,255,255,0.12)"}`,
-                            borderRadius: 6, padding: "3px 9px",
-                            fontSize: 13, fontWeight: 800,
-                            color: isActive ? "#f9a8d4" : "rgba(255,255,255,0.65)",
-                          }}>
-                            {b.icon} {b.name}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Детали маршрута недоступны</div>
-                    )}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {variantBuses.map((b, bi) => (
+                        <span key={bi} style={{
+                          display: "inline-flex", alignItems: "center", gap: 3,
+                          background: isActive ? "rgba(244,114,182,0.18)" : "rgba(255,255,255,0.07)",
+                          border: `1px solid ${isActive ? "rgba(244,114,182,0.4)" : "rgba(255,255,255,0.12)"}`,
+                          borderRadius: 6, padding: "3px 9px",
+                          fontSize: 13, fontWeight: 800,
+                          color: isActive ? "#f9a8d4" : "rgba(255,255,255,0.65)",
+                        }}>
+                          {b.icon} {b.name}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
