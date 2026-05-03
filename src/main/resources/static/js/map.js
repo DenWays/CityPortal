@@ -1,4 +1,4 @@
-﻿﻿const { useEffect, useState, useRef, useCallback } = React;
+const { useEffect, useState, useRef, useCallback } = React;
 
 const DEFAULT_CENTER = [51.7727, 55.1039];
 const DEFAULT_ZOOM   = 13;
@@ -1324,6 +1324,12 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn, userRole }) 
 }
 
 function MapPage() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('cp-theme') || 'dark');
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark'); }
   const [mapReady, setMapReady]             = useState(false);
   const [mapError, setMapError]             = useState(null);
   const [query, setQuery]                   = useState("");
@@ -1704,6 +1710,7 @@ function MapPage() {
           </div>
         </div>
         <div className="topbar-right">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'} aria-label="Переключить тему">{theme === 'dark' ? '☀️' : '🌙'}</button>
           {userRole === "ROLE_ADMIN" && (
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 7px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
           )}

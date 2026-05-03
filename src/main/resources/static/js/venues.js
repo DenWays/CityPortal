@@ -100,7 +100,17 @@ function AdminBadge() {
   );
 }
 
-function Topbar({ title, userRole }) {
+function useTheme() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('cp-theme') || 'dark');
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark'); }
+  return { theme, toggleTheme };
+}
+
+function Topbar({ title, userRole, theme, toggleTheme }) {
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -111,6 +121,7 @@ function Topbar({ title, userRole }) {
         </div>
       </div>
       <div className="topbar-right">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'} aria-label="Переключить тему">{theme === 'dark' ? '☀️' : '🌙'}</button>
         {userRole === "ROLE_ADMIN" && <AdminBadge />}
         <a className="btn smallbtn secondary" href="/">&larr; На главную</a>
       </div>
@@ -245,6 +256,7 @@ function VenueDetail({ id }) {
   const [summarizing, setSummarizing] = useState(false);
   const [summarizeMsg, setSummarizeMsg] = useState(null);
   const userRole = useUserRole();
+  const { theme, toggleTheme } = useTheme();
   const isAdmin = userRole === "ROLE_ADMIN";
 
   const load = useCallback(() => {
@@ -282,7 +294,7 @@ function VenueDetail({ id }) {
 
   return (
     <div className="home">
-      <Topbar title="Заведения" userRole={userRole} />
+      <Topbar title="Заведения" userRole={userRole} theme={theme} toggleTheme={toggleTheme} />
       <main className="main">
         <section className="section">
           <div style={{ marginBottom: 12 }}>
@@ -421,6 +433,7 @@ function VenuesList() {
   const [selectedCats, setSelectedCats] = useState([]);
   const [categories, setCategories]     = useState([]);
   const userRole = useUserRole();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     fetch("/api/venue/categories")
@@ -450,7 +463,7 @@ function VenuesList() {
 
   return (
     <div className="home">
-      <Topbar title="Заведения города" userRole={userRole} />
+      <Topbar title="Заведения города" userRole={userRole} theme={theme} toggleTheme={toggleTheme} />
       <main className="main">
         <section className="section">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>

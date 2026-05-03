@@ -1,4 +1,4 @@
-﻿const { useEffect, useState, useCallback, useRef } = React;
+const { useEffect, useState, useCallback, useRef } = React;
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -184,6 +184,12 @@ function DatePicker({ label: labelProp, value, onChange }) {
 
 function Topbar() {
   const [account, setAccount] = useState(null);
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('cp-theme') || 'dark');
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark'); }
 
   useEffect(() => {
     fetch("/api/auth/account", { credentials: "same-origin" })
@@ -215,6 +221,7 @@ function Topbar() {
         </div>
       </div>
       <div className="topbar-right">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'} aria-label="Переключить тему">{theme === 'dark' ? '☀️' : '🌙'}</button>
         {account ? (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

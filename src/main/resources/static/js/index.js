@@ -1234,6 +1234,18 @@ function CityTabs() {
 function CityPortalHome() {
   const [account, setAccount] = useState(null);
   const [loadingAccount, setLoadingAccount] = useState(true);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('cp-theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme(t => t === 'dark' ? 'light' : 'dark');
+  }
 
   useEffect(() => {
     (async () => {
@@ -1290,6 +1302,14 @@ function CityPortalHome() {
         </div>
 
         <div className="topbar-right">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+            aria-label="Переключить тему"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           {loadingAccount ? (
             <span className="small">Проверяем вход...</span>
           ) : account ? (

@@ -47,6 +47,12 @@ function formatUpdated(isoString) {
 }
 
 function WeatherPage() {
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('cp-theme') || 'dark');
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark'); }
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -78,6 +84,7 @@ function WeatherPage() {
           </div>
         </div>
         <div className="topbar-right">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'} aria-label="Переключить тему">{theme === 'dark' ? '☀️' : '🌙'}</button>
           <a className="btn smallbtn secondary" href="/">← На главную</a>
         </div>
       </header>

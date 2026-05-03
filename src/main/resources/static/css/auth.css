@@ -7,6 +7,65 @@
   --accent: #7c3aed;
   --accent-2: #22c55e;
   --danger: #ef4444;
+  --input-bg: rgba(0,0,0,0.18);
+  --input-border: rgba(255,255,255,0.12);
+  --widget-bg: rgba(0,0,0,0.16);
+  --widget-border: rgba(255,255,255,0.10);
+  --scroll-item-bg: rgba(0,0,0,0.18);
+  --scroll-item-border: rgba(255,255,255,0.08);
+  --topbar-bg: rgba(255,255,255,0.05);
+  --hero-bg: rgba(255,255,255,0.05);
+  --tabs-bg: rgba(255,255,255,0.04);
+  --tabs-border: rgba(255,255,255,0.08);
+  --tab-color: rgba(255,255,255,0.45);
+  --tab-hover: rgba(255,255,255,0.80);
+  --widget-title: rgba(255,255,255,0.86);
+  --link-color: rgba(255,255,255,0.9);
+  --shadow-card: rgba(0,0,0,0.45);
+  --shadow-topbar: rgba(0,0,0,0.25);
+  --temp-bar-bg: rgba(255,255,255,0.10);
+  --scrollbar-thumb: rgba(255,255,255,0.15);
+  --secondary-btn-bg: rgba(255,255,255,0.08);
+  --secondary-btn-border: rgba(255,255,255,0.12);
+  --msg-bg: rgba(0,0,0,0.18);
+  --msg-border: rgba(255,255,255,0.12);
+  --weather-tab-bg: rgba(255,255,255,0.05);
+  --weather-tab-border: rgba(255,255,255,0.12);
+}
+
+[data-theme="light"]{
+  --bg: #f0f2f8;
+  --card: rgba(255,255,255,0.92);
+  --card-border: rgba(0,0,0,0.10);
+  --text: rgba(15,20,40,0.90);
+  --muted: rgba(15,20,40,0.52);
+  --accent: #7c3aed;
+  --accent-2: #16a34a;
+  --danger: #dc2626;
+  --input-bg: rgba(255,255,255,0.85);
+  --input-border: rgba(0,0,0,0.13);
+  --widget-bg: rgba(255,255,255,0.75);
+  --widget-border: rgba(0,0,0,0.09);
+  --scroll-item-bg: rgba(255,255,255,0.80);
+  --scroll-item-border: rgba(0,0,0,0.08);
+  --topbar-bg: rgba(255,255,255,0.80);
+  --hero-bg: rgba(255,255,255,0.70);
+  --tabs-bg: rgba(0,0,0,0.05);
+  --tabs-border: rgba(0,0,0,0.09);
+  --tab-color: rgba(15,20,40,0.45);
+  --tab-hover: rgba(15,20,40,0.80);
+  --widget-title: rgba(15,20,40,0.86);
+  --link-color: rgba(15,20,40,0.85);
+  --shadow-card: rgba(0,0,0,0.12);
+  --shadow-topbar: rgba(0,0,0,0.08);
+  --temp-bar-bg: rgba(0,0,0,0.08);
+  --scrollbar-thumb: rgba(0,0,0,0.18);
+  --secondary-btn-bg: rgba(0,0,0,0.06);
+  --secondary-btn-border: rgba(0,0,0,0.13);
+  --msg-bg: rgba(255,255,255,0.70);
+  --msg-border: rgba(0,0,0,0.10);
+  --weather-tab-bg: rgba(0,0,0,0.05);
+  --weather-tab-border: rgba(0,0,0,0.10);
 }
 
 * { box-sizing: border-box; }
@@ -20,9 +79,18 @@ body{
     radial-gradient(900px 600px at 90% 20%, rgba(34,197,94,0.25), transparent 55%),
     radial-gradient(800px 500px at 50% 95%, rgba(59,130,246,0.18), transparent 55%),
     var(--bg);
+  transition: background 0.3s, color 0.3s;
 }
 
-a { color: rgba(255,255,255,0.9); text-decoration: none; }
+[data-theme="light"] body{
+  background:
+    radial-gradient(1200px 700px at 10% 10%, rgba(124,58,237,0.12), transparent 60%),
+    radial-gradient(900px 600px at 90% 20%, rgba(34,197,94,0.10), transparent 55%),
+    radial-gradient(800px 500px at 50% 95%, rgba(59,130,246,0.08), transparent 55%),
+    var(--bg);
+}
+
+a { color: var(--link-color); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 .muted{ color: var(--muted); }
@@ -43,7 +111,7 @@ a:hover { text-decoration: underline; }
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: 18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  box-shadow: 0 18px 60px var(--shadow-card);
   overflow: hidden;
 }
 
@@ -104,10 +172,11 @@ a:hover { text-decoration: underline; }
   width: 100%;
   padding: 12px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.18);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
   color: var(--text);
   outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .input:focus{
@@ -147,9 +216,10 @@ a:hover { text-decoration: underline; }
 }
 
 .btn.secondary{
-  background: rgba(255,255,255,0.08);
+  background: var(--secondary-btn-bg);
   box-shadow: none;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--secondary-btn-border);
+  color: var(--text);
 }
 
 .btn.smallbtn{
@@ -168,8 +238,8 @@ a:hover { text-decoration: underline; }
   border-radius: 12px;
   font-size: 13px;
   line-height: 1.35;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.18);
+  border: 1px solid var(--msg-border);
+  background: var(--msg-bg);
   color: var(--text);
 }
 
@@ -210,14 +280,17 @@ a:hover { text-decoration: underline; }
   width: min(1100px, calc(100% - 32px));
   margin: 22px auto 0;
   padding: 14px 14px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--topbar-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.25);
+  box-shadow: 0 18px 60px var(--shadow-topbar);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .topbar-left{
@@ -253,10 +326,11 @@ a:hover { text-decoration: underline; }
 /* Hero */
 .hero{
   padding: 18px 18px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--hero-bg);
+  border: 1px solid var(--card-border);
   border-radius: 18px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.20);
+  box-shadow: 0 18px 60px var(--shadow-topbar);
+  transition: background 0.3s;
 }
 
 .hero-title{
@@ -302,9 +376,10 @@ a:hover { text-decoration: underline; }
 
 .block{
   padding: 14px 14px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--hero-bg);
+  border: 1px solid var(--card-border);
   border-radius: 16px;
+  transition: background 0.3s;
 }
 
 /* Grid of widgets */
@@ -317,9 +392,10 @@ a:hover { text-decoration: underline; }
 .widget{
   grid-column: span 6;
   padding: 14px 14px;
-  background: rgba(0,0,0,0.16);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--widget-bg);
+  border: 1px solid var(--widget-border);
   border-radius: 16px;
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .taxi-widget{
@@ -335,12 +411,12 @@ a:hover { text-decoration: underline; }
   font-weight: 900;
   letter-spacing: 0.2px;
   font-size: 13px;
-  color: rgba(255,255,255,0.86);
+  color: var(--widget-title);
   margin-bottom: 8px;
 }
 
 .widget-body{
-  color: rgba(255,255,255,0.86);
+  color: var(--widget-title);
 }
 
 /* Lists */
@@ -353,13 +429,14 @@ a:hover { text-decoration: underline; }
 
 .list-item{
   padding: 12px 12px;
-  background: rgba(0,0,0,0.16);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--widget-bg);
+  border: 1px solid var(--widget-border);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  transition: background 0.3s;
 }
 
 /* --------------------------
@@ -418,8 +495,8 @@ a:hover { text-decoration: underline; }
 .weather-tab{
   padding: 5px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--weather-tab-border);
+  background: var(--weather-tab-bg);
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
@@ -452,9 +529,10 @@ a:hover { text-decoration: underline; }
   gap: 4px;
   min-width: 52px;
   padding: 8px 6px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--scroll-item-bg);
+  border: 1px solid var(--scroll-item-border);
   border-radius: 12px;
+  transition: background 0.3s;
 }
 
 .weather-daily{
@@ -468,9 +546,10 @@ a:hover { text-decoration: underline; }
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--scroll-item-bg);
+  border: 1px solid var(--scroll-item-border);
   border-radius: 12px;
+  transition: background 0.3s;
 }
 
 /* Widget as link */
@@ -489,7 +568,7 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
 }
 
-/* Same glow for non-link interactive widgets (map, taxi) */
+/* (map, taxi) */
 .widget-hover{
   transition: border-color 0.18s, box-shadow 0.18s;
 }
@@ -497,6 +576,7 @@ a:hover { text-decoration: underline; }
 .widget-hover:hover{
   border-color: rgba(124,58,237,0.55);
   box-shadow: 0 8px 32px rgba(124,58,237,0.18);
+  transform: translateY(-2px);
 }
 
 .weather-scroll-more{
@@ -594,7 +674,7 @@ a:hover { text-decoration: underline; }
   flex: 1;
   height: 4px;
   border-radius: 4px;
-  background: rgba(255,255,255,0.10);
+  background: var(--temp-bar-bg);
   position: relative;
   overflow: hidden;
 }
@@ -640,11 +720,12 @@ a:hover { text-decoration: underline; }
   gap: 0;
   position: relative;
   padding: 4px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--tabs-bg);
+  border: 1px solid var(--tabs-border);
   border-radius: 18px;
   width: fit-content;
   margin: 0 auto;
+  transition: background 0.3s;
 }
 
 .city-tab-btn {
@@ -653,7 +734,7 @@ a:hover { text-decoration: underline; }
   border-radius: 14px;
   border: none;
   background: transparent;
-  color: rgba(255,255,255,0.45);
+  color: var(--tab-color);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -676,7 +757,7 @@ a:hover { text-decoration: underline; }
 }
 
 .city-tab-btn:hover {
-  color: rgba(255,255,255,0.80);
+  color: var(--tab-hover);
 }
 
 .city-tab-btn.active {
@@ -700,7 +781,7 @@ a:hover { text-decoration: underline; }
   }
 }
 
-/* Taxi widget favorite routes scrollable list */
+/* Taxi widget  */
 .taxi-favs-scroll {
   overflow-y: auto;
   max-height: 110px;
@@ -732,7 +813,7 @@ a:hover { text-decoration: underline; }
   background: rgba(124,58,237,0.85);
 }
 
-/* Profile page — address dropdown in route form */
+/* Profile page  */
 .profile-dropdown-scroll::-webkit-scrollbar {
   width: 4px;
   border-radius: 4px;
@@ -752,7 +833,44 @@ a:hover { text-decoration: underline; }
   background: rgba(124,58,237,0.85);
 }
 
-@keyframes fadeSlideDown {
+/* --------------------------
+   Theme Toggle Button
+-------------------------- */
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--secondary-btn-border);
+  background: var(--secondary-btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  border-color: rgba(124,58,237,0.55);
+  background: rgba(124,58,237,0.12);
+  transform: scale(1.08);
+}
+
+
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+}
+
+.btn, .weather-tab, .widget-link, .theme-toggle {
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.15s;
+}
+
   from {
     opacity: 0;
     transform: translateY(-8px);

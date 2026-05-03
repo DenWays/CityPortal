@@ -1,4 +1,4 @@
-﻿const { useEffect, useState, useRef, useCallback } = React;
+const { useEffect, useState, useRef, useCallback } = React;
 
 function MiniMapPicker({ onPick, initialAddress, mapId }) {
   const domId = mapId || "profile-minimap";
@@ -703,6 +703,12 @@ async function getCsrfToken() {
 
 function ProfilePage() {
   const [account, setAccount] = useState(null);
+  const [theme, setTheme] = React.useState(() => localStorage.getItem('cp-theme') || 'dark');
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cp-theme', theme);
+  }, [theme]);
+  function toggleTheme() { setTheme(t => t === 'dark' ? 'light' : 'dark'); }
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState(null);
 
@@ -755,6 +761,7 @@ function ProfilePage() {
         </div>
 
         <div className="topbar-right">
+        <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'} aria-label="Переключить тему">{theme === 'dark' ? '☀️' : '🌙'}</button>
           {account && account.role && account.role.name === "ROLE_ADMIN" && (
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, padding: "2px 7px", borderRadius: 20, background: "linear-gradient(135deg, rgba(167,139,250,0.25), rgba(96,165,250,0.2))", border: "1px solid rgba(167,139,250,0.45)", color: "#c4b5fd", textTransform: "uppercase" }}>👑 Admin</span>
           )}
