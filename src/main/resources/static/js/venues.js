@@ -55,13 +55,13 @@ function VenueMap({ latitude, longitude, name, address }) {
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, marginBottom: 8, letterSpacing: 0.5 }}>📍 НА КАРТЕ</div>
+      <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, marginBottom: 8, letterSpacing: 0.5 }}>📍 НА КАРТЕ</div>
       {mapError ? (
         <div style={{ padding: "12px 14px", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: 12, fontSize: 13, color: "#f87171" }}>{mapError}</div>
       ) : (
-        <div style={{ position: "relative", width: "100%", height: 280, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)" }}>
+        <div style={{ position: "relative", width: "100%", height: 280, borderRadius: 14, overflow: "hidden", border: "1px solid var(--card-border)", background: "var(--card)" }}>
           {!mapReady && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 13, zIndex: 1 }}>⏳ Загрузка карты...</div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)", fontSize: 13, zIndex: 1 }}>⏳ Загрузка карты...</div>
           )}
           <div
             ref={mapContainerRef}
@@ -85,7 +85,7 @@ function StarRating({ rating }) {
   return (
     <span style={{ color: "#fbbf24", fontSize: 13, letterSpacing: 1 }}>
       {"\u2605".repeat(Math.min(full, 5))}{"\u2606".repeat(Math.max(0, 5 - full))}
-      <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginLeft: 4 }}>{rating}</span>
+      <span style={{ color: "var(--muted)", fontSize: 11, marginLeft: 4 }}>{rating}</span>
     </span>
   );
 }
@@ -173,9 +173,9 @@ function CategoryMultiSelect({ categories, selected, onChange }) {
         style={{
           display: "flex", alignItems: "center", gap: 6,
           padding: "9px 14px", borderRadius: 10, cursor: "pointer",
-          border: hasSelected ? "1px solid rgba(96,165,250,0.70)" : "1px solid rgba(255,255,255,0.18)",
-          background: hasSelected ? "rgba(96,165,250,0.15)" : "rgba(255,255,255,0.07)",
-          color: "rgba(255,255,255,0.92)", fontSize: 14,
+          border: hasSelected ? "1px solid rgba(96,165,250,0.70)" : "1px solid var(--input-border, rgba(0,0,0,0.13))",
+          background: hasSelected ? "rgba(96,165,250,0.15)" : "var(--input-bg, rgba(255,255,255,0.85))",
+          color: "var(--text)", fontSize: 14,
           fontFamily: "inherit", fontWeight: hasSelected ? 700 : 400,
           whiteSpace: "nowrap", userSelect: "none",
           transition: "border-color 0.15s, background 0.15s"
@@ -191,7 +191,7 @@ function CategoryMultiSelect({ categories, selected, onChange }) {
       {open && (
         <div style={{
           position: "absolute", zIndex: 300, top: "calc(100% + 8px)", left: 0,
-          background: "#0f1623", border: "1px solid rgba(255,255,255,0.12)",
+          background: "var(--dropdown-bg)", border: "1px solid var(--panel-border)",
           borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.60), 0 0 0 1px rgba(96,165,250,0.08)",
           padding: "8px", minWidth: 240, maxHeight: 320, overflowY: "auto"
         }}>
@@ -207,12 +207,12 @@ function CategoryMultiSelect({ categories, selected, onChange }) {
                   background: isActive ? "rgba(96,165,250,0.15)" : "transparent",
                   transition: "background 0.12s", userSelect: "none"
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "var(--panel-hover)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = isActive ? "rgba(96,165,250,0.15)" : "transparent"; }}
               >
                 <div style={{
                   width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                  border: isActive ? "2px solid rgba(96,165,250,0.90)" : "2px solid rgba(255,255,255,0.25)",
+                  border: isActive ? "2px solid rgba(96,165,250,0.90)" : "2px solid var(--input-border)",
                   background: isActive ? "rgba(96,165,250,0.80)" : "transparent",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.12s"
@@ -223,7 +223,7 @@ function CategoryMultiSelect({ categories, selected, onChange }) {
                     </svg>
                   )}
                 </div>
-                <span style={{ fontSize: 13, color: isActive ? "#93c5fd" : "rgba(255,255,255,0.80)" }}>{cat}</span>
+                <span style={{ fontSize: 13, color: isActive ? "#93c5fd" : "var(--text)" }}>{cat}</span>
               </div>
             );
           })}
@@ -232,10 +232,10 @@ function CategoryMultiSelect({ categories, selected, onChange }) {
               onClick={() => { onChange([]); setOpen(false); }}
               style={{
                 marginTop: 4, padding: "7px 12px", borderRadius: 10, cursor: "pointer",
-                borderTop: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.40)", fontSize: 12, textAlign: "center", userSelect: "none"
+                borderTop: "1px solid var(--card-border)",
+                color: "var(--muted)", fontSize: 12, textAlign: "center", userSelect: "none"
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--panel-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               ✕ Сбросить выбор
@@ -289,8 +289,8 @@ function VenueDetail({ id }) {
   }
 
   const row = { display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 10 };
-  const lbl = { fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, minWidth: 80, paddingTop: 2 };
-  const val = { fontSize: 14, color: "rgba(255,255,255,0.88)", flex: 1, lineHeight: 1.6 };
+  const lbl = { fontSize: 11, color: "var(--muted)", fontWeight: 600, minWidth: 80, paddingTop: 2 };
+  const val = { fontSize: 14, color: "var(--text)", flex: 1, lineHeight: 1.6 };
 
   return (
     <div className="home">
@@ -298,16 +298,16 @@ function VenueDetail({ id }) {
       <main className="main">
         <section className="section">
           <div style={{ marginBottom: 12 }}>
-            <a href="/venues" style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textDecoration: "none" }}>← Все заведения</a>
+            <a href="/venues" style={{ color: "var(--muted)", fontSize: 13, textDecoration: "none" }}>← Все заведения</a>
           </div>
-          {loading && <div className="block" style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.4)" }}>⏳ Загрузка...</div>}
+          {loading && <div className="block" style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>⏳ Загрузка...</div>}
           {error && <div className="block" style={{ color: "#f87171", padding: 24 }}>{error}</div>}
           {!loading && !error && data && (
             <div className="block">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
                 <div>
                   <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, lineHeight: 1.3 }}>{data.name}</h2>
-                  {data.category && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>{data.category}</div>}
+                  {data.category && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>{data.category}</div>}
                   {data.rating && <div style={{ marginTop: 6 }}><StarRating rating={data.rating} /></div>}
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -332,10 +332,10 @@ function VenueDetail({ id }) {
                   {summarizeMsg.ok ? "✅ " : "⚠️ "}{summarizeMsg.text}
                 </div>
               )}
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 16, marginBottom: 16 }}>
+              <div style={{ borderTop: "1px solid var(--card-border)", paddingTop: 16, marginBottom: 16 }}>
                 {data.address && <div style={row}><span style={lbl}>📍 Адрес</span><span style={val}>{data.address}</span></div>}
                 {data.phone && <div style={row}><span style={lbl}>📞 Телефон</span><a href={`tel:${data.phone}`} style={{ ...val, color: "#60a5fa", textDecoration: "none" }}>{data.phone}</a></div>}
-                {data.description && <div style={{ ...row, flexDirection: "column" }}><span style={{ ...lbl, marginBottom: 6 }}>📝 Описание</span><span style={{ ...val, color: "rgba(255,255,255,0.65)", fontSize: 13 }}>{data.description}</span></div>}
+                {data.description && <div style={{ ...row, flexDirection: "column" }}><span style={{ ...lbl, marginBottom: 6 }}>📝 Описание</span><span style={{ ...val, color: "var(--muted)", fontSize: 13 }}>{data.description}</span></div>}
               </div>
 
               {data.latitude && data.longitude && (
@@ -350,7 +350,7 @@ function VenueDetail({ id }) {
               {data.reviewsSummary && (
                 <div style={{ padding: "14px 16px", marginBottom: 16, background: "rgba(96,165,250,0.07)", border: "1px solid rgba(96,165,250,0.18)", borderRadius: 12 }}>
                   <div style={{ fontSize: 11, color: "#60a5fa", fontWeight: 700, marginBottom: 8, letterSpacing: 0.5 }}>🤖 РЕЗЮМЕ ОТЗЫВОВ (AI)</div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.7 }}>{data.reviewsSummary}</div>
+                  <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7 }}>{data.reviewsSummary}</div>
                 </div>
               )}
               {(data.reviews && data.reviews.length > 0 || data.rating || data.reviewsSummary) && (
@@ -359,7 +359,7 @@ function VenueDetail({ id }) {
                     <circle cx="12" cy="12" r="12" fill="#FC3F1D"/>
                     <text x="12" y="16" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold" fontFamily="Arial">Я</text>
                   </svg>
-                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
                     Информация и отзывы получены с&nbsp;
                     {data.yandexUrl
                       ? <a href={data.yandexUrl} target="_blank" rel="noreferrer" style={{ color: "#fbbf24", textDecoration: "none" }}>Яндекс Карт ↗</a>
@@ -371,26 +371,26 @@ function VenueDetail({ id }) {
               )}
               {data.reviews && data.reviews.length > 0 && (
                 <div>
-                  <button onClick={() => setShowReviews(v => !v)} style={{ width: "100%", textAlign: "left", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <button onClick={() => setShowReviews(v => !v)} style={{ width: "100%", textAlign: "left", background: "none", border: "1px solid var(--card-border)", borderRadius: 10, padding: "10px 14px", cursor: "pointer", color: "var(--text)", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span>💬 Отзывы ({data.reviews.length})</span>
                     <span style={{ fontSize: 11 }}>{showReviews ? "▲" : "▼"}</span>
                   </button>
                   {showReviews && (
                     <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
                       {data.reviews.map((r, i) => (
-                        <div key={i} style={{ padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10 }}>
+                        <div key={i} style={{ padding: "12px 14px", background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 10 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, flexWrap: "wrap", gap: 6 }}>
                             <span style={{ fontWeight: 600, fontSize: 13 }}>{r.author || "Аноним"}</span>
                             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                               {r.rating && <StarRating rating={r.rating} />}
-                              {r.reviewDate && <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{r.reviewDate}</span>}
+                              {r.reviewDate && <span style={{ fontSize: 11, color: "var(--muted)" }}>{r.reviewDate}</span>}
                             </div>
                           </div>
-                          {r.text && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.6 }}>{r.text}</div>}
-                          <div style={{ marginTop: 6, fontSize: 10, color: "rgba(255,255,255,0.22)" }}>
+                          {r.text && <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>{r.text}</div>}
+                          <div style={{ marginTop: 6, fontSize: 10, color: "var(--muted)" }}>
                             Источник:{" "}
                             {data.yandexUrl
-                              ? <a href={data.yandexUrl} target="_blank" rel="noreferrer" style={{ color: "rgba(255,255,255,0.28)", textDecoration: "none" }}>Яндекс Карты</a>
+                              ? <a href={data.yandexUrl} target="_blank" rel="noreferrer" style={{ color: "var(--muted)", textDecoration: "none" }}>Яндекс Карты</a>
                               : "Яндекс Карты"
                             }
                           </div>
@@ -401,7 +401,7 @@ function VenueDetail({ id }) {
                 </div>
               )}
               {(!data.reviews || data.reviews.length === 0) && !data.reviewsSummary && (
-                <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, marginTop: 8 }}>
+                <div style={{ color: "var(--muted)", fontSize: 13, marginTop: 8 }}>
                   Отзывы ещё не загружены.{isAdmin ? " Нажмите «Обновить данные»." : ""}
                 </div>
               )}
@@ -484,20 +484,20 @@ function VenuesList() {
           </div>
 
           {hasFilters && (
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
               {searchQuery && <span>Поиск: «{searchQuery}»</span>}
               {searchQuery && selectedCats.length > 0 && <span>·</span>}
               {selectedCats.length > 0 && <span>{selectedCats.length === 1 ? `Категория: ${selectedCats[0]}` : `Категории: ${selectedCats.join(", ")}`}</span>}
             </div>
           )}
 
-          {loading && <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.4)" }}>⏳ Загрузка...</div>}
+          {loading && <div style={{ textAlign: "center", padding: 40, color: "var(--muted)" }}>⏳ Загрузка...</div>}
           {error && <div style={{ color: "#f87171", padding: 16 }}>{error}</div>}
 
           {!loading && !error && items.length === 0 && (
             <div className="block" style={{ textAlign: "center", padding: 40 }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🏢</div>
-              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>
+              <div style={{ color: "var(--muted)", fontSize: 14 }}>
                 {hasFilters ? "Ничего не найдено по вашему запросу." : "Заведения пока не добавлены. Нажмите на объект на карте и нажмите «Об объекте»."}
               </div>
               {hasFilters
@@ -512,18 +512,18 @@ function VenuesList() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
                 {items.map(item => (
                   <a key={item.id} href={`/venues/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                    <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 14, padding: "16px 18px", transition: "all 0.15s", cursor: "pointer", height: "100%", boxSizing: "border-box" }}
+                    <div style={{ background: "var(--card)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "16px 18px", transition: "all 0.15s", cursor: "pointer", height: "100%", boxSizing: "border-box" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "rgba(96,165,250,0.08)"; e.currentTarget.style.borderColor = "rgba(96,165,250,0.3)"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)"; }}>
+                      onMouseLeave={e => { e.currentTarget.style.background = "var(--card)"; e.currentTarget.style.borderColor = "var(--card-border.09)"; }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
                         <div style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0, background: "rgba(96,165,250,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🏢</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3, marginBottom: 2, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{item.name}</div>
-                          {item.category && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{item.category}</div>}
+                          {item.category && <div style={{ fontSize: 11, color: "var(--muted)" }}>{item.category}</div>}
                         </div>
                       </div>
                       {item.rating && <div style={{ marginBottom: 8 }}><StarRating rating={item.rating} /></div>}
-                      {item.address && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>📍 {item.address}</div>}
+                      {item.address && <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>📍 {item.address}</div>}
                       {item.reviewsSummary && (
                         <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#60a5fa", background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.15)", borderRadius: 6, padding: "2px 8px" }}>🤖 Есть AI-резюме</div>
                       )}
@@ -534,7 +534,7 @@ function VenuesList() {
               {totalPages > 1 && (
                 <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
                   <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="btn smallbtn secondary" style={{ marginTop: 0, opacity: page === 0 ? 0.4 : 1 }}>← Назад</button>
-                  <span style={{ display: "flex", alignItems: "center", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{page + 1} / {totalPages}</span>
+                  <span style={{ display: "flex", alignItems: "center", fontSize: 13, color: "var(--muted)" }}>{page + 1} / {totalPages}</span>
                   <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="btn smallbtn secondary" style={{ marginTop: 0, opacity: page >= totalPages - 1 ? 0.4 : 1 }}>Вперёд →</button>
                 </div>
               )}

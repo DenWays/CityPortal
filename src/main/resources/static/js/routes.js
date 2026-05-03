@@ -18,7 +18,7 @@ function routeTypeBadgeColor(type) {
     case "self":     return { bg: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.30)", color: "#6ee7b7" };
     case "audio":    return { bg: "rgba(251,191,36,0.12)", border: "rgba(251,191,36,0.25)", color: "#fbbf24" };
     case "guide":    return { bg: "rgba(59,130,246,0.15)", border: "rgba(59,130,246,0.30)", color: "#93c5fd" };
-    default:         return { bg: "rgba(255,255,255,0.07)", border: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)" };
+    default:         return { bg: "var(--card)", border: "var(--card-border)", color: "var(--muted)" };
   }
 }
 
@@ -71,9 +71,9 @@ function TypeMultiSelect({ selected, onChange }) {
         style={{
           display: "flex", alignItems: "center", gap: 6,
           padding: "9px 14px", borderRadius: 10, cursor: "pointer",
-          border: hasSelected ? "1px solid rgba(124,58,237,0.70)" : "1px solid rgba(255,255,255,0.18)",
-          background: hasSelected ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.07)",
-          color: "rgba(255,255,255,0.92)", fontSize: 14,
+          border: hasSelected ? "1px solid rgba(124,58,237,0.70)" : "1px solid var(--input-border, rgba(0,0,0,0.13))",
+          background: hasSelected ? "rgba(124,58,237,0.18)" : "var(--input-bg, rgba(255,255,255,0.85))",
+          color: "var(--text)", fontSize: 14,
           fontFamily: "inherit", fontWeight: hasSelected ? 700 : 400,
           whiteSpace: "nowrap", userSelect: "none",
           transition: "border-color 0.15s, background 0.15s"
@@ -89,8 +89,8 @@ function TypeMultiSelect({ selected, onChange }) {
       {open && (
         <div style={{
           position: "absolute", zIndex: 200, top: "calc(100% + 8px)", left: 0,
-          background: "#0f1623",
-          border: "1px solid rgba(255,255,255,0.12)",
+          background: "var(--dropdown-bg)",
+          border: "1px solid var(--panel-border)",
           borderRadius: 16,
           boxShadow: "0 24px 64px rgba(0,0,0,0.60), 0 0 0 1px rgba(124,58,237,0.10)",
           padding: "8px",
@@ -110,13 +110,13 @@ function TypeMultiSelect({ selected, onChange }) {
                   transition: "background 0.12s",
                   userSelect: "none"
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "var(--panel-hover)"; }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
               >
                 {/* Чекбокс */}
                 <div style={{
                   width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                  border: isActive ? "2px solid rgba(124,58,237,0.90)" : "2px solid rgba(255,255,255,0.25)",
+                  border: isActive ? "2px solid rgba(124,58,237,0.90)" : "2px solid var(--input-border)",
                   background: isActive ? "rgba(124,58,237,0.80)" : "transparent",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.12s"
@@ -149,7 +149,7 @@ function TypeMultiSelect({ selected, onChange }) {
                 textAlign: "center", userSelect: "none",
                 transition: "background 0.12s"
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--panel-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               ✕ Сбросить выбор
@@ -235,19 +235,19 @@ function RouteCard({ item }) {
       style={{
         textDecoration: "none", color: "inherit",
         display: "flex", flexDirection: "column",
-        background: "rgba(0,0,0,0.18)",
-        border: "1px solid rgba(255,255,255,0.10)",
+        background: "var(--scroll-item-bg)",
+        border: "1px solid var(--card-border)",
         borderRadius: 14, overflow: "hidden",
         transition: "border-color 0.15s, background 0.15s, transform 0.15s",
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = "rgba(255,255,255,0.07)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
+        e.currentTarget.style.background = "var(--card)";
+        e.currentTarget.style.borderColor = "var(--card-border)";
         e.currentTarget.style.transform = "translateY(-2px)";
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.background = "rgba(0,0,0,0.18)";
-        e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+        e.currentTarget.style.background = "var(--scroll-item-bg)";
+        e.currentTarget.style.borderColor = "var(--card-border)";
         e.currentTarget.style.transform = "none";
       }}
     >
@@ -283,12 +283,12 @@ function RouteCard({ item }) {
           {item.title}
         </div>
         {item.operatorName && (
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
             🏢 {item.operatorName}
           </div>
         )}
         {item.duration && (
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.50)", marginTop: "auto" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginTop: "auto" }}>
             ⏱ {item.duration}
           </div>
         )}
@@ -375,9 +375,9 @@ function RoutesList() {
             style={{
               flex: "1 1 220px", minWidth: 0,
               padding: "9px 14px", borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(255,255,255,0.07)",
-              color: "var(--text, #fff)", fontSize: 14, outline: "none"
+              border: "1px solid var(--input-border, rgba(0,0,0,0.13))",
+              background: "var(--input-bg, rgba(255,255,255,0.85))",
+              color: "var(--text)", fontSize: 14, outline: "none"
             }}
           />
           <TypeMultiSelect selected={selectedTypes} onChange={onTypesChange} />
@@ -404,10 +404,10 @@ function RoutesList() {
 
         <div style={{
           padding: 14,
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.10)",
+          background: "var(--widget-bg)",
+          border: "1px solid var(--card-border)",
           borderRadius: 18,
-          boxShadow: "0 18px 60px rgba(0,0,0,0.20)"
+          boxShadow: "0 18px 60px var(--shadow-card)"
         }}>
           <div style={{
             display: "grid",

@@ -108,14 +108,15 @@ function MiniMapPicker({ onPick, initialAddress, mapId }) {
         {sugOpen && suggestions.length > 0 && (
           <ul style={{
             position: "absolute", top: "100%", left: 0, right: 0, zIndex: 999,
-            background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
+            background: "var(--dropdown-bg)", border: "1px solid var(--panel-border)",
             borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.5)", maxHeight: 200, overflowY: "auto"
+            boxShadow: "0 8px 24px rgba(0,0,0,0.3)", maxHeight: 200, overflowY: "auto"
           }}>
             {suggestions.map((s, i) => (
               <li key={i} onMouseDown={() => handleSugSelect(s)} style={{
                 padding: "9px 14px", cursor: "pointer", fontSize: 13,
-                borderBottom: "1px solid rgba(255,255,255,0.06)"
+                color: "var(--panel-text)",
+                borderBottom: "1px solid var(--panel-item-border)"
               }}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -435,9 +436,9 @@ function RouteAddressField({ label, value, onChange, savedAddresses }) {
   const dropdownStyle = {
     position: "absolute",
     left: 0, right: 0, zIndex: 999,
-    background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
+    background: "var(--dropdown-bg)", border: "1px solid var(--panel-border)",
     borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
     maxHeight: 138, overflowY: "auto",
     scrollbarWidth: "thin",
     scrollbarColor: "rgba(124,58,237,0.5) rgba(255,255,255,0.04)",
@@ -475,12 +476,12 @@ function RouteAddressField({ label, value, onChange, savedAddresses }) {
               setInputVal(a.address);
               onChange({ address: a.address, lat: a.lat, lon: a.lon });
               setShowFavs(false);
-            }} style={{ padding: "9px 14px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            }} style={{ padding: "9px 14px", cursor: "pointer", fontSize: 13, color: "var(--panel-text)", borderBottom: "1px solid var(--panel-item-border)" }}
               onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               <b>{a.label}</b>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{a.address}</div>
+              <div style={{ fontSize: 11, color: "var(--panel-muted)" }}>{a.address}</div>
             </li>
           ))}
         </ul>

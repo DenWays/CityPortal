@@ -151,7 +151,7 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder, sa
   return (
     <div ref={wrapRef} style={{ position: "relative", flex: 1, minWidth: 220 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8,
-        background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+        background: "var(--input-bg)", border: "1px solid var(--input-border)",
         borderRadius: 10, padding: "10px 14px" }}>
         <span style={{ color: dotColor, fontSize: 18, flexShrink: 0 }}>●</span>
         <input
@@ -161,39 +161,39 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder, sa
           placeholder={placeholder}
           style={{
             flex: 1, background: "transparent", border: "none", outline: "none",
-            color: "#fff", fontSize: 14, fontFamily: "inherit"
+            color: "var(--text)", fontSize: 14, fontFamily: "inherit"
           }}
         />
         {value && (
           <button onClick={() => { onChange(""); onSelect(null, null, ""); closeDropdown(); }}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 0 }}>✕</button>
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 16, padding: 0 }}>✕</button>
         )}
       </div>
       {hasAnything && (
         <div style={{
           position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 999,
-          background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+          background: "var(--dropdown-bg)", border: "1px solid var(--card-border)",
+          borderRadius: 10, overflow: "hidden", boxShadow: "0 8px 32px rgba(0,0,0,0.2)"
         }}>
           {/* Saved addresses section — only shown when typing and matches exist */}
           {favMatches.length > 0 && (
             <>
-              <div style={{ padding: "6px 14px 4px", fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ padding: "6px 14px 4px", fontSize: 11, color: "var(--muted)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid var(--card-border)" }}>
                 ⭐ ИЗБРАННЫЕ АДРЕСА
               </div>
               {favMatches.map((fav, i) => (
                 <div key={"fav-" + i} onMouseDown={() => handleFavSelect(fav)} style={{
                   padding: "10px 14px", cursor: "pointer",
-                  borderBottom: (i < favMatches.length - 1 || suggestions.length > 0) ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  borderBottom: (i < favMatches.length - 1 || suggestions.length > 0) ? "1px solid var(--card-border)" : "none",
                   transition: "background 0.1s"
                 }}
                   onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 >
-                  <div style={{ fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 6, color: "var(--text)" }}>
                     <span>⭐</span>{fav.label}
                   </div>
-                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{fav.address}</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{fav.address}</div>
                 </div>
               ))}
             </>
@@ -201,14 +201,14 @@ function AddressInput({ label, color, value, onChange, onSelect, placeholder, sa
           {/* Geocode suggestions */}
           {suggestions.map((s, i) => (
             <div key={i} onMouseDown={() => handleSelect(s)} style={{
-              padding: "10px 14px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+              padding: "10px 14px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid var(--card-border)" : "none",
               transition: "background 0.1s"
             }}
               onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{s.name}</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{s.full}</div>
+              <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text)" }}>{s.name}</div>
+              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{s.full}</div>
             </div>
           ))}
         </div>
@@ -406,7 +406,7 @@ function RoutePicker({ jsApiKey, onFromChange, onToChange, fromCoords, toCoords,
           style={{
             width: "100%", height: "360px", borderRadius: 12, overflow: "hidden",
             display: mapReady ? "block" : "none",
-            border: "1px solid rgba(255,255,255,0.10)",
+            border: "1px solid var(--card-border)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
             cursor: "crosshair"
           }}
@@ -490,8 +490,8 @@ function TaxiOptionCard({ opt }) {
   const cardStyle = {
     display: "flex", alignItems: "center", gap: 16,
     padding: "16px 20px",
-    background: isAvailable ? "rgba(255,255,255,0.035)" : "rgba(255,255,255,0.012)",
-    border: `1px solid ${isAvailable ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)"}`,
+    background: isAvailable ? "var(--card)" : "var(--scroll-item-bg)",
+    border: `1px solid ${isAvailable ? "var(--card-border)" : "var(--scroll-item-border)"}`,
     borderRadius: 14, color: "inherit",
     opacity: isAvailable ? 1 : 0.5,
     cursor: "default"
@@ -508,8 +508,8 @@ function TaxiOptionCard({ opt }) {
           {!isAvailable && (
             <span style={{
               fontSize: 10, fontWeight: 600, letterSpacing: 0.4,
-              background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              background: "var(--secondary-btn-bg)", color: "var(--muted)",
+              border: "1px solid var(--secondary-btn-border)",
               borderRadius: 20, padding: "1px 7px"
             }}>Недоступно</span>
           )}

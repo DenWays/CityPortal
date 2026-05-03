@@ -225,20 +225,20 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn, userRole }) {
     <div style={{
       position: "absolute", bottom: 16, left: 8,
       zIndex: 500, minWidth: 220, maxWidth: 300,
-      background: "rgba(15,17,30,0.97)", border: "1px solid rgba(255,255,255,0.13)",
+      background: "var(--panel-bg)", border: "1px solid var(--panel-border)",
       borderRadius: 14, padding: "12px 14px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       backdropFilter: "blur(12px)"
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 8 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 2 }}>📍 ВЫБРАННАЯ ТОЧКА</div>
+          <div style={{ fontSize: 10, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 2 }}>📍 ВЫБРАННАЯ ТОЧКА</div>
           {point.name && (
             <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 2 }}>{point.name}</div>
           )}
-          <div style={{ fontSize: 12, fontWeight: point.name ? 400 : 600, lineHeight: 1.4, color: point.name ? "rgba(255,255,255,0.75)" : "#fff" }}>{point.address}</div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{point.lat.toFixed(5)}, {point.lon.toFixed(5)}</div>
+          <div style={{ fontSize: 12, fontWeight: point.name ? 400 : 600, lineHeight: 1.4, color: point.name ? "var(--panel-sub)" : "var(--panel-text)" }}>{point.address}</div>
+          <div style={{ fontSize: 10, color: "var(--panel-muted)", marginTop: 2 }}>{point.lat.toFixed(5)}, {point.lon.toFixed(5)}</div>
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-close-color)", fontSize: 16, padding: 0, flexShrink: 0 }}>✕</button>
       </div>
 
       {!addMode && phase !== "saved" && (
@@ -250,7 +250,7 @@ function PointPopup({ point, onClose, onSaved, isLoggedIn, userRole }) {
             </button>
           )}
           {!isLoggedIn && (
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ fontSize: 11, color: "var(--panel-muted)", display: "flex", alignItems: "center", gap: 5 }}>
               <span>⭐</span>
               <span><a href="/login" style={{ color: "#fbbf24", textDecoration: "underline" }}>Войдите</a>, чтобы добавить в избранное</span>
             </div>
@@ -668,23 +668,23 @@ function MapWidget() {
             {showDropdown && (
               <ul style={{
                 position: "absolute", top: "100%", left: 0, right: 0,
-                background: "rgba(11,18,32,0.97)", border: "1px solid rgba(255,255,255,0.12)",
+                background: "var(--dropdown-bg)", border: "1px solid var(--card-border)",
                 borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
                 zIndex: 200, maxHeight: 220, overflowY: "auto",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.5)"
+                boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
               }}>
                 {/* Favourite matches */}
                 {favMatches.length > 0 && (
                   <>
                     <li style={{
                       padding: "5px 12px 3px", fontSize: 10,
-                      color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5,
-                      borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: "default"
+                      color: "var(--muted)", fontWeight: 600, letterSpacing: 0.5,
+                      borderBottom: "1px solid var(--card-border)", cursor: "default"
                     }}>⭐ ИЗБРАННЫЕ</li>
                     {favMatches.map((fav, i) => (
                       <li key={"fav-" + i} onMouseDown={() => handleSelectFav(fav)} style={{
                         padding: "8px 12px", cursor: "pointer", fontSize: 12,
-                        borderBottom: "1px solid rgba(255,255,255,0.06)"
+                        borderBottom: "1px solid var(--card-border)", color: "var(--text)"
                       }}
                         onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.10)"}
                         onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -692,7 +692,7 @@ function MapWidget() {
                         <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>
                           <span>⭐</span>{fav.label}
                         </div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{fav.address}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>{fav.address}</div>
                       </li>
                     ))}
                   </>
@@ -701,7 +701,7 @@ function MapWidget() {
                 {results.map((r, i) => (
                   <li key={i} onMouseDown={() => handleSelect(r)} style={{
                     padding: "8px 12px", cursor: "pointer", fontSize: 12,
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    borderBottom: "1px solid var(--card-border)",
                     color: "var(--text)"
                   }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
@@ -731,7 +731,7 @@ function MapWidget() {
               borderRadius: 10,
               overflow: "hidden",
               display: mapReady ? "block" : "none",
-              border: "1px solid rgba(255,255,255,0.10)"
+              border: "1px solid var(--card-border)"
             }}
           />
           <PointPopup point={clickedPoint} onClose={handlePopupClose} onSaved={handlePopupSaved} isLoggedIn={isLoggedIn} userRole={userRole} />
@@ -797,7 +797,7 @@ function TrafficWidget() {
           {Array.from({ length: 10 }, (_, i) => (
             <div key={i} style={{
               flex: 1, height: 8, borderRadius: 3,
-              background: i < data.level ? color : "rgba(255,255,255,0.08)"
+              background: i < data.level ? color : "var(--card-border)"
             }} />
           ))}
         </div>
@@ -895,7 +895,7 @@ function TaxiWidget() {
         </div>
 
         {/* Vertical divider */}
-        <div style={{ width: 1, background: "rgba(255,255,255,0.10)", flexShrink: 0, alignSelf: "stretch" }} />
+        <div style={{ width: 1, background: "var(--card-border)", flexShrink: 0, alignSelf: "stretch" }} />
 
         {/* Right column: routes header at same level as widget title */}
         <div style={{ flex: 1, minWidth: 0, paddingLeft: 14, display: "flex", flexDirection: "column" }}>
@@ -916,12 +916,12 @@ function TaxiWidget() {
                 >
                   <div style={{
                     padding: "7px 10px", borderRadius: 8,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    background: "var(--scroll-item-bg)",
+                    border: "1px solid var(--scroll-item-border)",
                     transition: "background 0.15s"
                   }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.15)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "var(--scroll-item-bg)"}
                   >
                     <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {r.label || "Маршрут"}
@@ -1043,7 +1043,7 @@ function CityTabs() {
               <a key={item.id} href={"/news/" + item.id} style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 4px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid var(--card-border)",
                 textDecoration: "none", color: "inherit",
                 borderRadius: 8, transition: "background 0.15s"
               }}
@@ -1053,12 +1053,12 @@ function CityTabs() {
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt="" style={{
                     width: 64, height: 48, objectFit: "cover",
-                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                    borderRadius: 6, flexShrink: 0, background: "var(--scroll-item-bg)"
                   }} onError={e => e.currentTarget.style.display = "none"} />
                 ) : (
                   <div style={{
                     width: 64, height: 48, borderRadius: 6, flexShrink: 0,
-                    background: "rgba(255,255,255,0.07)",
+                    background: "var(--tabs-bg)",
                     display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem"
                   }}>📰</div>
                 )}
@@ -1090,7 +1090,7 @@ function CityTabs() {
               <a key={item.id} href={item.sourceUrl || "/afisha"} target="_blank" rel="noopener noreferrer" style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 4px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid var(--card-border)",
                 textDecoration: "none", color: "inherit",
                 borderRadius: 8, transition: "background 0.15s"
               }}
@@ -1100,7 +1100,7 @@ function CityTabs() {
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt="" style={{
                     width: 64, height: 48, objectFit: "cover",
-                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                    borderRadius: 6, flexShrink: 0, background: "var(--scroll-item-bg)"
                   }} onError={e => e.currentTarget.style.display = "none"} />
                 ) : (
                   <div style={{
@@ -1145,7 +1145,7 @@ function CityTabs() {
               <a key={item.id} href={`/venues/${item.id}`} style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 4px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid var(--card-border)",
                 textDecoration: "none", color: "inherit",
                 borderRadius: 8, transition: "background 0.15s"
               }}
@@ -1189,7 +1189,7 @@ function CityTabs() {
               <a key={item.id} href={item.sourceUrl || "/routes"} target="_blank" rel="noopener noreferrer" style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "10px 4px",
-                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                borderBottom: "1px solid var(--card-border)",
                 textDecoration: "none", color: "inherit",
                 borderRadius: 8, transition: "background 0.15s"
               }}
@@ -1199,7 +1199,7 @@ function CityTabs() {
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt="" style={{
                     width: 64, height: 48, objectFit: "cover",
-                    borderRadius: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)"
+                    borderRadius: 6, flexShrink: 0, background: "var(--scroll-item-bg)"
                   }} onError={e => e.currentTarget.style.display = "none"} />
                 ) : (
                   <div style={{

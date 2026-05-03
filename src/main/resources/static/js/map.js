@@ -502,27 +502,27 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
 
   return (
     <div style={{
-      background: "rgba(15,17,30,0.97)",
-      border: "1px solid rgba(255,255,255,0.13)",
+      background: "var(--panel-bg)",
+      border: "1px solid var(--panel-border)",
       borderRadius: 16,
       padding: "18px 20px",
       marginTop: 12,
-      boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+      boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
       backdropFilter: "blur(12px)",
     }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5 }}>КАК ДОБРАТЬСЯ</div>
-          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2 }}>🏁 {toPoint.name || toPoint.address}</div>
-          {toPoint.name && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>{toPoint.address}</div>}
+          <div style={{ fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5 }}>КАК ДОБРАТЬСЯ</div>
+          <div style={{ fontSize: 14, fontWeight: 700, marginTop: 2, color: "var(--panel-text)" }}>🏁 {toPoint.name || toPoint.address}</div>
+          {toPoint.name && <div style={{ fontSize: 12, color: "var(--panel-sub)", marginTop: 1 }}>{toPoint.address}</div>}
         </div>
-        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: 18, padding: 0, lineHeight: 1, marginLeft: 12 }}>✕</button>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--panel-close-color)", fontSize: 18, padding: 0, lineHeight: 1, marginLeft: 12 }}>✕</button>
       </div>
 
       {/* From input */}
       <div style={{ marginBottom: 14 }} ref={inputWrapRef}>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>📍 Откуда:</div>
+        <div style={{ fontSize: 12, color: "var(--panel-muted)", marginBottom: 6 }}>📍 Откуда:</div>
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ position: "relative", flex: 1 }}>
             <input
@@ -552,30 +552,30 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
               return (
                 <ul style={{
                   position: "absolute", top: "100%", left: 0, right: 0,
-                  background: "var(--bg2, rgba(20,22,40,0.99))", border: "1px solid rgba(255,255,255,0.12)",
+                  background: "var(--dropdown-bg)", border: "1px solid var(--panel-border)",
                   borderRadius: 8, margin: "4px 0 0", padding: 0, listStyle: "none",
-                  zIndex: 600, maxHeight: 260, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.5)"
+                  zIndex: 600, maxHeight: 260, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
                 }}>
                   {favMatches.length > 0 && (
                     <>
-                      <li style={{ padding: "6px 12px 4px", fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: "default" }}>
+                      <li style={{ padding: "6px 12px 4px", fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid var(--panel-item-border)", cursor: "default" }}>
                         ⭐ ИЗБРАННЫЕ АДРЕСА
                       </li>
                       {favMatches.map((fav, i) => (
                         <li key={"fav-" + i} onMouseDown={() => setFrom(fav.lat, fav.lon, fav.address)}
-                          style={{ padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 13 }}
+                          style={{ padding: "9px 12px", cursor: "pointer", borderBottom: "1px solid var(--panel-item-border)", fontSize: 13, color: "var(--panel-text)" }}
                           onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.10)"}
                           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                           <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><span>⭐</span>{fav.label}</div>
-                          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{fav.address}</div>
+                          <div style={{ fontSize: 11, color: "var(--panel-muted)", marginTop: 2 }}>{fav.address}</div>
                         </li>
                       ))}
                     </>
                   )}
                   {suggestions.map((s, i) => (
                     <li key={i} onMouseDown={() => setFrom(s.lat, s.lon, s.name)}
-                      style={{ padding: "9px 12px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.85)" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                      style={{ padding: "9px 12px", cursor: "pointer", fontSize: 13, borderBottom: "1px solid var(--panel-item-border)", color: "var(--panel-text)" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--panel-hover)"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       {s.name}
                     </li>
@@ -607,7 +607,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
 
       {/* Placeholder */}
       {!fromCoords && (
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "10px 0" }}>
+        <div style={{ fontSize: 13, color: "var(--panel-muted)", textAlign: "center", padding: "10px 0" }}>
           Укажите точку отправления — маршруты посчитаются автоматически
         </div>
       )}
@@ -623,15 +623,15 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
               <div key={m.key} onClick={() => setActiveMode(m.key)}
                 style={{
                   flex: "1 1 120px",
-                  background: isActive ? `rgba(${rgb},0.10)` : "rgba(255,255,255,0.03)",
-                  border: `1.5px solid ${isActive ? m.color : "rgba(255,255,255,0.09)"}`,
+                  background: isActive ? `rgba(${rgb},0.10)` : "var(--card, rgba(255,255,255,0.03))",
+                  border: `1.5px solid ${isActive ? m.color : "var(--card-border, rgba(255,255,255,0.09))"}`,
                   borderRadius: 12, padding: "12px 14px", cursor: "pointer",
                   transition: "all 0.15s", userSelect: "none",
                 }}>
                 <div style={{ fontSize: 22, marginBottom: 4 }}>{m.icon}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? m.color : "rgba(255,255,255,0.6)" }}>{m.label}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? m.color : "var(--muted)" }}>{m.label}</div>
                 {(!info || info.loading) && (
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>⏳ считаю…</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>⏳ считаю…</div>
                 )}
                 {info && !info.loading && info.error && (
                   <div style={{ fontSize: 11, color: "#f87171", marginTop: 6 }}>{info.error}</div>
@@ -655,7 +655,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
       {/* Transit — multiple route variants */}
       {fromCoords && activeMode === "masstransit" && transitInfo && !transitInfo.loading && !transitInfo.error && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 10 }}>
             ВАРИАНТЫ МАРШРУТОВ НА АВТОБУСЕ
           </div>
 
@@ -669,8 +669,8 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                 return (
                   <div key={vi} onClick={() => setActiveTransitIdx(vi)}
                     style={{
-                      background: isActive ? "rgba(244,114,182,0.12)" : "rgba(255,255,255,0.03)",
-                      border: `1.5px solid ${isActive ? "#f472b6" : "rgba(255,255,255,0.08)"}`,
+                      background: isActive ? "rgba(244,114,182,0.12)" : "var(--card, rgba(255,255,255,0.03))",
+                      border: `1.5px solid ${isActive ? "#f472b6" : "var(--card-border, rgba(255,255,255,0.08))"}`,
                       borderRadius: 12, padding: "10px 14px", cursor: "pointer",
                       transition: "all 0.15s", userSelect: "none",
                     }}>
@@ -678,10 +678,10 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         {isActive && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#f472b6", flexShrink: 0 }} />}
-                        <span style={{ fontSize: 16, fontWeight: 800, color: isActive ? "#f9a8d4" : "rgba(255,255,255,0.75)" }}>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: isActive ? "#f9a8d4" : "var(--text)" }}>
                           {formatDuration(variant.duration)}
                         </span>
-                        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
                           {formatDistance(variant.distance)}
                         </span>
                         {transfers > 0 && (
@@ -701,11 +701,11 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                       {variantBuses.map((b, bi) => (
                         <span key={bi} style={{
                           display: "inline-flex", alignItems: "center", gap: 3,
-                          background: isActive ? "rgba(244,114,182,0.18)" : "rgba(255,255,255,0.07)",
-                          border: `1px solid ${isActive ? "rgba(244,114,182,0.4)" : "rgba(255,255,255,0.12)"}`,
+                          background: isActive ? "rgba(244,114,182,0.18)" : "var(--secondary-btn-bg)",
+                          border: `1px solid ${isActive ? "rgba(244,114,182,0.4)" : "var(--card-border)"}`,
                           borderRadius: 6, padding: "3px 9px",
                           fontSize: 13, fontWeight: 800,
-                          color: isActive ? "#f9a8d4" : "rgba(255,255,255,0.65)",
+                          color: isActive ? "#f9a8d4" : "var(--text)",
                         }}>
                           {b.icon} {b.name}
                         </span>
@@ -720,7 +720,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
           {/* Step-by-step for selected variant */}
           {transitSteps.length > 0 && (
             <>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 8 }}>
                 ПОДРОБНЫЙ МАРШРУТ
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -729,7 +729,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                     {step.kind === "walk" ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 4px" }}>
                         <span style={{ fontSize: 15 }}>🚶</span>
-                        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
                           Пешком {step.dur ? formatDuration(step.dur) : ""}
                         </span>
                       </div>
@@ -751,13 +751,13 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                         </div>
                         <div style={{ flex: 1 }}>
                           {step.from && (
-                            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>
-                              <span style={{ color: "rgba(255,255,255,0.35)" }}>от </span>{step.from}
-                              {step.to && <><span style={{ color: "rgba(255,255,255,0.35)" }}> → </span>{step.to}</>}
+                            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+                              <span style={{ color: "var(--muted)" }}>от </span>{step.from}
+                              {step.to && <><span style={{ color: "var(--muted)" }}> → </span>{step.to}</>}
                             </div>
                           )}
                           {step.dur && (
-                            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>
                               ⏱ {formatDuration(step.dur)}
                             </div>
                           )}
@@ -765,7 +765,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
                       </div>
                     )}
                     {i < transitSteps.length - 1 && (
-                      <div style={{ paddingLeft: 14, color: "rgba(255,255,255,0.15)", fontSize: 11 }}>│</div>
+                      <div style={{ paddingLeft: 14, color: "var(--muted)", fontSize: 11 }}>│</div>
                     )}
                   </div>
                 ))}
@@ -774,7 +774,7 @@ function RoutePanel({ toPoint, mapRef, onClose, onPickingFromChange, savedAddres
           )}
 
           {transitRoutes.length === 0 && (
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Детали маршрута недоступны</div>
+            <div style={{ fontSize: 13, color: "var(--muted)" }}>Детали маршрута недоступны</div>
           )}
         </div>
       )}
@@ -887,14 +887,14 @@ function VenueInfoPanel({ point, onClose }) {
   };
 
   const rowStyle = { display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 8 };
-  const labelStyle = { fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, minWidth: 70, paddingTop: 1 };
-  const valueStyle = { fontSize: 13, color: "rgba(255,255,255,0.85)", flex: 1, lineHeight: 1.5 };
+  const labelStyle = { fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, minWidth: 70, paddingTop: 1 };
+  const valueStyle = { fontSize: 13, color: "var(--panel-text)", flex: 1, lineHeight: 1.5 };
 
   return (
     <div style={panelStyle}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5 }}>
+        <div style={{ fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5 }}>
           🏢 ОБ ОБЪЕКТЕ
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -973,7 +973,7 @@ function VenueInfoPanel({ point, onClose }) {
           {venueData.description && (
             <div style={{ ...rowStyle, flexDirection: "column" }}>
               <span style={{ ...labelStyle, marginBottom: 4 }}>📝 Описание</span>
-              <span style={{ ...valueStyle, color: "rgba(255,255,255,0.65)", fontSize: 12, lineHeight: 1.6 }}>{venueData.description}</span>
+              <span style={{ ...valueStyle, color: "var(--muted)", fontSize: 12, lineHeight: 1.6 }}>{venueData.description}</span>
             </div>
           )}
 
@@ -1015,11 +1015,11 @@ function VenueInfoPanel({ point, onClose }) {
                     <div key={i} style={{
                       padding: "10px 12px",
                       background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      border: "1px solid var(--card-border)",
                       borderRadius: 10
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>
                           {r.author || "Аноним"}
                         </span>
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1199,27 +1199,27 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn, userRole }) 
       position: "absolute", bottom: 24, left: 8,
       zIndex: 500, minWidth: 260, maxWidth: 340,
       maxHeight: "80vh", overflowY: "auto",
-      background: "rgba(15,17,30,0.97)", border: "1px solid rgba(255,255,255,0.13)",
-      borderRadius: 16, padding: "16px 18px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+      background: "var(--panel-bg)", border: "1px solid var(--panel-border)",
+      borderRadius: 16, padding: "16px 18px", boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
       backdropFilter: "blur(12px)"
     }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 3 }}>
+          <div style={{ fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5, marginBottom: 3 }}>
             📍 ВЫБРАННАЯ ТОЧКА
           </div>
           {point.name && (
-            <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 2 }}>{point.name}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.3, marginBottom: 2, color: "var(--panel-text)" }}>{point.name}</div>
           )}
-          <div style={{ fontSize: 13, fontWeight: point.name ? 400 : 600, lineHeight: 1.4, color: point.name ? "rgba(255,255,255,0.75)" : "#fff" }}>{point.address}</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 3 }}>
+          <div style={{ fontSize: 13, fontWeight: point.name ? 400 : 600, lineHeight: 1.4, color: point.name ? "var(--panel-sub)" : "var(--panel-text)" }}>{point.address}</div>
+          <div style={{ fontSize: 11, color: "var(--panel-muted)", marginTop: 3 }}>
             {point.lat.toFixed(5)}, {point.lon.toFixed(5)}
           </div>
         </div>
         <button onClick={onClose} style={{
           background: "none", border: "none", cursor: "pointer",
-          color: "rgba(255,255,255,0.4)", fontSize: 18, padding: 0, flexShrink: 0, lineHeight: 1
+          color: "var(--panel-close-color)", fontSize: 18, padding: 0, flexShrink: 0, lineHeight: 1
         }}>✕</button>
       </div>
 
@@ -1234,7 +1234,7 @@ function PointPopup({ point, onClose, onSaved, onRoute, isLoggedIn, userRole }) 
             </button>
           )}
           {!isLoggedIn && (
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ fontSize: 12, color: "var(--panel-muted)", display: "flex", alignItems: "center", gap: 6 }}>
               <span>⭐</span>
               <span><a href="/login" style={{ color: "#fbbf24", textDecoration: "underline" }}>Войдите</a>, чтобы добавить в избранное</span>
             </div>
@@ -1734,30 +1734,30 @@ function MapPage() {
               {showDropdown && (
                 <ul style={{
                   position: "absolute", top: "100%", left: 0, right: 0,
-                  background: "var(--bg2, #1e1e2e)", border: "1px solid rgba(255,255,255,0.12)",
+                  background: "var(--dropdown-bg)", border: "1px solid var(--panel-border)",
                   borderRadius: 8, margin: 0, padding: 0, listStyle: "none",
-                  zIndex: 100, maxHeight: 320, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.4)"
+                  zIndex: 100, maxHeight: 320, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
                 }}>
                   {favMatches.length > 0 && (
                     <>
-                      <li style={{ padding: "6px 14px 4px", fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid rgba(255,255,255,0.06)", cursor: "default" }}>
+                      <li style={{ padding: "6px 14px 4px", fontSize: 11, color: "var(--panel-muted)", fontWeight: 600, letterSpacing: 0.5, borderBottom: "1px solid var(--panel-item-border)", cursor: "default" }}>
                         ⭐ ИЗБРАННЫЕ АДРЕСА
                       </li>
                       {favMatches.map((fav, i) => (
                         <li key={"fav-" + i} onMouseDown={() => handleSelectFav(fav)}
-                          style={{ padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 14 }}
+                          style={{ padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid var(--panel-item-border)", fontSize: 14, color: "var(--panel-text)" }}
                           onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.10)"}
                           onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                           <div style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><span>⭐</span>{fav.label}</div>
-                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{fav.address}</div>
+                          <div style={{ fontSize: 12, color: "var(--panel-muted)", marginTop: 2 }}>{fav.address}</div>
                         </li>
                       ))}
                     </>
                   )}
                   {results.map((r, i) => (
                     <li key={i} onMouseDown={() => handleSelect(r)}
-                      style={{ padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.06)", fontSize: 14, color: "var(--text, #cdd6f4)" }}
-                      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                      style={{ padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid var(--panel-item-border)", fontSize: 14, color: "var(--text, #cdd6f4)" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "var(--panel-hover)"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       {r.name}
                     </li>

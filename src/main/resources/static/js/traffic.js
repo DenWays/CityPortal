@@ -16,7 +16,7 @@ function LevelBar({ level }) {
       {Array.from({ length: 10 }, (_, i) => (
         <div key={i} style={{
           width: 20, height: 20, borderRadius: 5,
-          background: i < level ? color : "rgba(255,255,255,0.08)",
+          background: i < level ? color : "var(--card-border)",
           boxShadow: i < level ? `0 0 6px ${color}66` : "none",
           transition: "background 0.3s"
         }} />
@@ -218,7 +218,7 @@ function SegmentsTable({ segments, onStreetClick }) {
             <div key={i} style={{
               display: "flex", alignItems: "center", gap: 14,
               padding: "13px 18px",
-              borderBottom: i < segments.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+              borderBottom: i < segments.length - 1 ? "1px solid var(--card-border)" : "none",
               transition: "background 0.15s", cursor: "pointer"
             }}
             onClick={() => onStreetClick && onStreetClick(seg.name)}
@@ -240,11 +240,11 @@ function SegmentsTable({ segments, onStreetClick }) {
                 {Array.from({ length: 5 }, (_, j) => (
                   <div key={j} style={{
                     width: 7, height: 16, borderRadius: 3,
-                    background: j * 2 < seg.level ? color : "rgba(255,255,255,0.08)"
+                    background: j * 2 < seg.level ? color : "var(--card-border)"
                   }} />
                 ))}
               </div>
-              <div style={{ fontSize: 16, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>📍</div>
+              <div style={{ fontSize: 16, color: "var(--muted)", flexShrink: 0 }}>📍</div>
             </div>
           );
         })}

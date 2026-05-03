@@ -31,6 +31,15 @@
   --msg-border: rgba(255,255,255,0.12);
   --weather-tab-bg: rgba(255,255,255,0.05);
   --weather-tab-border: rgba(255,255,255,0.12);
+  --dropdown-bg: #111827;
+  --panel-bg: rgba(15,17,30,0.97);
+  --panel-border: rgba(255,255,255,0.13);
+  --panel-text: rgba(255,255,255,0.92);
+  --panel-muted: rgba(255,255,255,0.4);
+  --panel-sub: rgba(255,255,255,0.5);
+  --panel-item-border: rgba(255,255,255,0.06);
+  --panel-hover: rgba(255,255,255,0.07);
+  --panel-close-color: rgba(255,255,255,0.4);
 }
 
 [data-theme="light"]{
@@ -66,6 +75,15 @@
   --msg-border: rgba(0,0,0,0.10);
   --weather-tab-bg: rgba(0,0,0,0.05);
   --weather-tab-border: rgba(0,0,0,0.10);
+  --dropdown-bg: #ffffff;
+  --panel-bg: rgba(255,255,255,0.97);
+  --panel-border: rgba(0,0,0,0.12);
+  --panel-text: rgba(15,20,40,0.90);
+  --panel-muted: rgba(15,20,40,0.45);
+  --panel-sub: rgba(15,20,40,0.55);
+  --panel-item-border: rgba(0,0,0,0.07);
+  --panel-hover: rgba(0,0,0,0.05);
+  --panel-close-color: rgba(15,20,40,0.4);
 }
 
 * { box-sizing: border-box; }

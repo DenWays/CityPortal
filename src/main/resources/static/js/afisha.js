@@ -27,8 +27,8 @@ const RU_MONTHS = ["Январь","Февраль","Март","Апрель","М
 const RU_DAYS   = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 
 const navBtn = {
-  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-  borderRadius: 8, color: "rgba(255,255,255,0.80)", cursor: "pointer",
+  background: "var(--panel-hover)", border: "1px solid var(--panel-border)",
+  borderRadius: 8, color: "var(--panel-text)", cursor: "pointer",
   width: 28, height: 28, fontSize: 16, display: "flex", alignItems: "center",
   justifyContent: "center", fontFamily: "inherit", padding: 0
 };
@@ -102,9 +102,9 @@ function DatePicker({ label: labelProp, value, onChange }) {
       <button onClick={() => setOpen(o => !o)} style={{
         display: "flex", alignItems: "center", gap: 6,
         padding: "9px 14px", borderRadius: 10, cursor: "pointer",
-        border: value ? "1px solid rgba(124,58,237,0.70)" : "1px solid rgba(255,255,255,0.18)",
-        background: value ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.07)",
-        color: "rgba(255,255,255,0.92)", fontSize: 14,
+        border: value ? "1px solid rgba(124,58,237,0.70)" : "1px solid var(--input-border, rgba(0,0,0,0.13))",
+        background: value ? "rgba(124,58,237,0.18)" : "var(--input-bg, rgba(255,255,255,0.07))",
+        color: "var(--text)", fontSize: 14,
         fontFamily: "inherit", fontWeight: value ? 700 : 400,
         whiteSpace: "nowrap", userSelect: "none",
         transition: "border-color 0.15s, background 0.15s"
@@ -119,8 +119,8 @@ function DatePicker({ label: labelProp, value, onChange }) {
       {open && (
         <div style={{
           position: "absolute", zIndex: 200, top: "calc(100% + 8px)", left: 0,
-          background: "#0f1623",
-          border: "1px solid rgba(255,255,255,0.12)",
+          background: "var(--dropdown-bg)",
+          border: "1px solid var(--panel-border)",
           borderRadius: 16,
           boxShadow: "0 24px 64px rgba(0,0,0,0.60), 0 0 0 1px rgba(124,58,237,0.10)",
           padding: "14px 14px 10px",
@@ -128,7 +128,7 @@ function DatePicker({ label: labelProp, value, onChange }) {
         }}>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: 10 }}>
             <button onClick={prevMonth} style={navBtn}>‹</button>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "rgba(255,255,255,0.92)" }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--panel-text)" }}>
               {RU_MONTHS[viewMonth]} {viewYear}
             </span>
             <button onClick={nextMonth} style={navBtn}>›</button>
@@ -137,7 +137,7 @@ function DatePicker({ label: labelProp, value, onChange }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", marginBottom: 4 }}>
             {RU_DAYS.map(d => (
               <div key={d} style={{ textAlign:"center", fontSize: 11,
-                color: "rgba(255,255,255,0.35)", fontWeight: 600, padding: "2px 0" }}>{d}</div>
+                color: "var(--muted)", fontWeight: 600, padding: "2px 0" }}>{d}</div>
             ))}
           </div>
 
@@ -157,12 +157,12 @@ function DatePicker({ label: labelProp, value, onChange }) {
                   background: isSel
                     ? "linear-gradient(135deg,rgba(124,58,237,0.95),rgba(59,130,246,0.85))"
                     : isToday ? "rgba(124,58,237,0.20)" : "transparent",
-                  color: isSel ? "#fff" : isWeekend ? "rgba(239,68,68,0.80)" : "rgba(255,255,255,0.85)",
+                  color: isSel ? "#fff" : isWeekend ? "rgba(239,68,68,0.80)" : "var(--text)",
                   boxShadow: isSel ? "0 4px 12px rgba(124,58,237,0.40)" : "none",
                   outline: isToday && !isSel ? "1px solid rgba(124,58,237,0.40)" : "none",
                   transition: "background 0.1s"
                 }}
-                onMouseEnter={e => { if(!isSel) e.currentTarget.style.background="rgba(255,255,255,0.09)"; }}
+                onMouseEnter={e => { if(!isSel) e.currentTarget.style.background="var(--panel-hover)"; }}
                 onMouseLeave={e => { if(!isSel) e.currentTarget.style.background=isToday?"rgba(124,58,237,0.20)":"transparent"; }}
                 >{day}</button>
               );
@@ -172,8 +172,8 @@ function DatePicker({ label: labelProp, value, onChange }) {
           {value && (
             <button onClick={() => { onChange(""); setOpen(false); }} style={{
               marginTop: 10, width: "100%", padding: "7px", borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)",
-              color: "rgba(255,255,255,0.45)", fontSize: 12, cursor: "pointer", fontFamily: "inherit"
+              border: "1px solid var(--panel-border)", background: "transparent",
+              color: "var(--muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit"
             }}>✕ Сбросить дату</button>
           )}
         </div>
@@ -315,9 +315,9 @@ function EventsList() {
             style={{
               flex: "1 1 220px", minWidth: 0,
               padding: "9px 14px", borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(255,255,255,0.07)",
-              color: "var(--text, #fff)", fontSize: 14, outline: "none"
+              border: "1px solid var(--input-border, rgba(0,0,0,0.13))",
+              background: "var(--input-bg, rgba(255,255,255,0.85))",
+              color: "var(--text)", fontSize: 14, outline: "none"
             }}
           />
           <DatePicker label="📅 С" value={dateFrom} onChange={onDateFromChange} />
@@ -341,10 +341,10 @@ function EventsList() {
 
         <div style={{
           padding: 14,
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.10)",
+          background: "var(--widget-bg)",
+          border: "1px solid var(--card-border)",
           borderRadius: 18,
-          boxShadow: "0 18px 60px rgba(0,0,0,0.20)"
+          boxShadow: "0 18px 60px var(--shadow-card)"
         }}>
           <div style={{
             display: "grid",
@@ -355,14 +355,14 @@ function EventsList() {
               <a key={item.id} href={item.sourceUrl || "#"} target="_blank" rel="noopener noreferrer" style={{
                 textDecoration: "none", color: "inherit",
                 display: "flex", flexDirection: "column",
-                background: "rgba(0,0,0,0.18)",
-                border: "1px solid rgba(255,255,255,0.10)",
+                background: "var(--scroll-item-bg)",
+                border: "1px solid var(--card-border)",
                 borderRadius: 14,
                 overflow: "hidden",
                 transition: "border-color 0.15s, background 0.15s, transform 0.15s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.18)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"; e.currentTarget.style.transform = "none"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--card)"; e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--scroll-item-bg)"; e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.transform = "none"; }}
               >
                 {item.imageUrl ? (
                   <div style={{ width: "100%", aspectRatio: "428 / 605", background: "rgba(0,0,0,0.30)", flexShrink: 0 }}>
@@ -379,11 +379,11 @@ function EventsList() {
                     WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
                   }}>{item.title}</div>
                   {item.venue && (
-                    <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)" }}>📍 {item.venue}</div>
+                    <div style={{ fontSize: 12, color: "var(--muted)" }}>📍 {item.venue}</div>
                   )}
                   <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     {item.eventDate && (
-                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.50)" }}>🗓 {formatDate(item.eventDate)}</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)" }}>🗓 {formatDate(item.eventDate)}</div>
                     )}
                     {item.price && (
                       <div style={{ fontSize: 12, fontWeight: 700,

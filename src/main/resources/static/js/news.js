@@ -27,8 +27,8 @@ const RU_MONTHS = ["Январь","Февраль","Март","Апрель","М
 const RU_DAYS   = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 
 const navBtn = {
-  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-  borderRadius: 8, color: "rgba(255,255,255,0.80)", cursor: "pointer",
+  background: "var(--panel-hover)", border: "1px solid var(--panel-border)",
+  borderRadius: 8, color: "var(--panel-text)", cursor: "pointer",
   width: 28, height: 28, fontSize: 16, display: "flex", alignItems: "center",
   justifyContent: "center", fontFamily: "inherit", padding: 0
 };
@@ -102,9 +102,9 @@ function DatePicker({ value, onChange }) {
       <button onClick={() => setOpen(o => !o)} style={{
         display: "flex", alignItems: "center", gap: 6,
         padding: "9px 14px", borderRadius: 10, cursor: "pointer",
-        border: value ? "1px solid rgba(124,58,237,0.70)" : "1px solid rgba(255,255,255,0.18)",
-        background: value ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.07)",
-        color: "rgba(255,255,255,0.92)", fontSize: 14,
+        border: value ? "1px solid rgba(124,58,237,0.70)" : "1px solid var(--input-border, rgba(0,0,0,0.13))",
+        background: value ? "rgba(124,58,237,0.18)" : "var(--input-bg, rgba(255,255,255,0.07))",
+        color: "var(--text)", fontSize: 14,
         fontFamily: "inherit", fontWeight: value ? 700 : 400,
         whiteSpace: "nowrap", userSelect: "none",
         transition: "border-color 0.15s, background 0.15s"
@@ -119,8 +119,8 @@ function DatePicker({ value, onChange }) {
       {open && (
         <div style={{
           position: "absolute", zIndex: 200, top: "calc(100% + 8px)", left: 0,
-          background: "#0f1623",
-          border: "1px solid rgba(255,255,255,0.12)",
+          background: "var(--dropdown-bg)",
+          border: "1px solid var(--panel-border)",
           borderRadius: 16,
           boxShadow: "0 24px 64px rgba(0,0,0,0.60), 0 0 0 1px rgba(124,58,237,0.10)",
           padding: "14px 14px 10px",
@@ -129,7 +129,7 @@ function DatePicker({ value, onChange }) {
           {/* Навигация */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: 10 }}>
             <button onClick={prevMonth} style={navBtn}>‹</button>
-            <span style={{ fontWeight: 700, fontSize: 14, color: "rgba(255,255,255,0.92)" }}>
+            <span style={{ fontWeight: 700, fontSize: 14, color: "var(--panel-text)" }}>
               {RU_MONTHS[viewMonth]} {viewYear}
             </span>
             <button onClick={nextMonth} style={navBtn}>›</button>
@@ -139,7 +139,7 @@ function DatePicker({ value, onChange }) {
           <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", marginBottom: 4 }}>
             {RU_DAYS.map(d => (
               <div key={d} style={{ textAlign:"center", fontSize: 11,
-                color: "rgba(255,255,255,0.35)", fontWeight: 600, padding: "2px 0" }}>{d}</div>
+                color: "var(--muted)", fontWeight: 600, padding: "2px 0" }}>{d}</div>
             ))}
           </div>
 
@@ -162,12 +162,12 @@ function DatePicker({ value, onChange }) {
                     : isToday
                       ? "rgba(124,58,237,0.20)"
                       : "transparent",
-                  color: isSel ? "#fff" : isWeekend ? "rgba(239,68,68,0.80)" : "rgba(255,255,255,0.85)",
+                  color: isSel ? "#fff" : isWeekend ? "rgba(239,68,68,0.80)" : "var(--text)",
                   boxShadow: isSel ? "0 4px 12px rgba(124,58,237,0.40)" : "none",
                   outline: isToday && !isSel ? "1px solid rgba(124,58,237,0.40)" : "none",
                   transition: "background 0.1s"
                 }}
-                onMouseEnter={e => { if(!isSel) e.currentTarget.style.background="rgba(255,255,255,0.09)"; }}
+                onMouseEnter={e => { if(!isSel) e.currentTarget.style.background="var(--panel-hover)"; }}
                 onMouseLeave={e => { if(!isSel) e.currentTarget.style.background=isToday?"rgba(124,58,237,0.20)":"transparent"; }}
                 >{day}</button>
               );
@@ -177,8 +177,8 @@ function DatePicker({ value, onChange }) {
           {value && (
             <button onClick={() => { onChange(""); setOpen(false); }} style={{
               marginTop: 10, width: "100%", padding: "7px", borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)",
-              color: "rgba(255,255,255,0.45)", fontSize: 12, cursor: "pointer", fontFamily: "inherit"
+              border: "1px solid var(--panel-border)", background: "transparent",
+              color: "var(--muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit"
             }}>✕ Сбросить дату</button>
           )}
         </div>
@@ -324,9 +324,9 @@ function NewsList() {
             style={{
               flex: "1 1 240px", minWidth: 0,
               padding: "9px 14px", borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(255,255,255,0.07)",
-              color: "var(--text, #fff)", fontSize: 14,
+              border: "1px solid var(--input-border, rgba(0,0,0,0.13))",
+              background: "var(--input-bg, rgba(255,255,255,0.85))",
+              color: "var(--text)", fontSize: 14,
               outline: "none"
             }}
           />
@@ -378,7 +378,7 @@ function NewsList() {
                 transition: "border-color 0.15s, background 0.15s",
                 minHeight: 100
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--card)"; e.currentTarget.style.borderColor = "var(--card-border)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.16)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)"; }}
               >
                 {item.imageUrl && (
